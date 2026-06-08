@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>猜歌遊戲 Music Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #12121a;
+    --bg3: #1a1a26;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0f0f8;
+    --muted: #8888aa;
+    --accent-a: #ff4d6d;
+    --accent-b: #7c3aed;
+    --accent-c: #0ea5e9;
+    --gold: #fbbf24;
+    --green: #22c55e;
+    --red: #ef4444;
+    --radius: 12px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  .noise {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+
+  .container { position: relative; z-index: 1; width: 100%; max-width: 680px; padding: 2rem 1.5rem 4rem; }
+
+  /* ─── SCREENS ─── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ─── TITLE SCREEN ─── */
+  .title-glow {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: -2px;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b), var(--accent-c));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+  .title-sub {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.95rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 3rem;
+  }
+
+  .playlist-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 2rem; }
+
+  .playlist-card {
+    position: relative;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.18s, border-color 0.18s, background 0.18s;
+    background: var(--bg2);
+    overflow: hidden;
+  }
+  .playlist-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.18s;
+  }
+  .playlist-card.a::before { background: radial-gradient(circle at 50% 0, rgba(255,77,109,0.15), transparent 70%); }
+  .playlist-card.b::before { background: radial-gradient(circle at 50% 0, rgba(124,58,237,0.15), transparent 70%); }
+  .playlist-card.c::before { background: radial-gradient(circle at 50% 0, rgba(14,165,233,0.15), transparent 70%); }
+  .playlist-card:hover::before { opacity: 1; }
+  .playlist-card:hover { transform: translateY(-4px); }
+  .playlist-card.a:hover { border-color: var(--accent-a); }
+  .playlist-card.b:hover { border-color: var(--accent-b); }
+  .playlist-card.c:hover { border-color: var(--accent-c); }
+
+  .card-letter {
+    font-family: 'Space Mono', monospace;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  .card-letter.a { color: var(--accent-a); }
+  .card-letter.b { color: var(--accent-b); }
+  .card-letter.c { color: var(--accent-c); }
+  .card-title { font-size: 0.8rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 0.3rem; }
+  .card-desc { font-size: 0.7rem; color: var(--muted); }
+
+  /* ─── GAME SCREEN ─── */
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .hud-label { font-size: 0.7rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; }
+  .hud-val { font-family: 'Space Mono', monospace; font-size: 1.2rem; font-weight: 700; }
+  .hud-val.score { color: var(--gold); }
+  .hud-val.q { color: var(--text); }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--bg3);
+    border-radius: 3px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+    transition: width 0.4s;
+    border-radius: 3px;
+  }
+
+  /* music visualizer */
+  .player-area {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+  .visualizer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    height: 48px;
+    margin-bottom: 1rem;
+  }
+  .bar {
+    width: 4px;
+    border-radius: 2px;
+    background: var(--accent-a);
+    animation: bounce 0.6s ease-in-out infinite alternate;
+    transform-origin: bottom;
+  }
+  .bar:nth-child(2) { animation-delay: 0.1s; background: #ff6b6b; }
+  .bar:nth-child(3) { animation-delay: 0.2s; background: var(--accent-b); }
+  .bar:nth-child(4) { animation-delay: 0.05s; background: #a78bfa; }
+  .bar:nth-child(5) { animation-delay: 0.15s; background: var(--accent-c); }
+  .bar:nth-child(6) { animation-delay: 0.25s; background: #38bdf8; }
+  .bar:nth-child(7) { animation-delay: 0.08s; }
+  .bar:nth-child(8) { animation-delay: 0.18s; }
+  .bar:nth-child(9) { animation-delay: 0.12s; }
+  .bar:nth-child(10) { animation-delay: 0.22s; }
+  .bar:nth-child(11) { animation-delay: 0.03s; }
+  .bar:nth-child(12) { animation-delay: 0.17s; }
+  .visualizer.paused .bar { animation-play-state: paused; }
+
+  @keyframes bounce {
+    from { height: 4px; }
+    to { height: 40px; }
+  }
+
+  .now-playing { font-size: 0.72rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .playing-hint { font-size: 0.9rem; color: var(--text); margin-top: 4px; }
+
+  .timer-ring { position: relative; display: inline-block; margin: 0.5rem auto; }
+  .timer-svg { transform: rotate(-90deg); }
+  .timer-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* options */
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+  .option-btn {
+    background: var(--bg2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, background 0.15s;
+    text-align: left;
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    position: relative;
+    overflow: hidden;
+  }
+  .option-btn:hover:not(:disabled) { transform: scale(1.02); border-color: rgba(255,255,255,0.25); background: var(--bg3); }
+  .option-btn .opt-key {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .option-btn.correct { border-color: var(--green); background: rgba(34,197,94,0.12); }
+  .option-btn.wrong { border-color: var(--red); background: rgba(239,68,68,0.12); }
+  .option-btn:disabled { cursor: default; }
+
+  .skip-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.6rem;
+    color: var(--muted);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    margin-top: 0.5rem;
+  }
+  .skip-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  /* feedback overlay */
+  .feedback {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    font-family: 'Space Mono', monospace;
+    font-size: 3rem;
+    font-weight: 700;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .feedback.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .feedback.correct-fb { color: var(--green); }
+  .feedback.wrong-fb { color: var(--red); }
+
+  /* ─── RESULT SCREEN ─── */
+  .result-header { text-align: center; margin-bottom: 2rem; }
+  .final-score {
+    font-family: 'Space Mono', monospace;
+    font-size: 5rem;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .score-label { color: var(--muted); font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 0.5rem; }
+  .rank { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; }
+
+  .result-list { margin-bottom: 2rem; }
+  .result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .result-item:last-child { border-bottom: none; }
+  .result-num { font-family: 'Space Mono', monospace; color: var(--muted); min-width: 24px; }
+  .result-song { flex: 1; }
+  .result-song-title { color: var(--text); font-weight: 500; }
+  .result-song-artist { font-size: 0.75rem; color: var(--muted); }
+  .result-pts { font-family: 'Space Mono', monospace; font-weight: 700; }
+  .result-pts.got { color: var(--green); }
+  .result-pts.missed { color: var(--red); }
+
+  .play-again-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    border: none;
+    border-radius: var(--radius);
+    padding: 1rem;
+    color: #fff;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .play-again-btn:hover { opacity: 0.9; transform: scale(1.01); }
+
+  /* reveal */
+  .reveal-info {
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg3);
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    display: none;
+  }
+  .reveal-info.show { display: block; }
+  .reveal-title { font-weight: 700; color: var(--text); }
+  .reveal-artist { color: var(--muted); font-size: 0.78rem; }
+  .next-btn {
+    margin-top: 0.75rem;
+    width: 100%;
+    background: var(--accent-b);
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    color: #fff;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    display: none;
+  }
+  .next-btn.show { display: block; }
+  .next-btn:hover { opacity: 0.85; }
+
+  @media (max-width: 480px) {
+    .playlist-grid { grid-template-columns: 1fr; }
+    .options-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="container">
+
+  <!-- TITLE SCREEN -->
+  <div id="screen-title" class="screen active">
+    <div style="padding-top: 3rem; margin-bottom: 3rem;">
+      <div class="title-glow">猜歌遊戲</div>
+      <div class="title-sub">Music Quiz · 10 Questions · 100 pts</div>
+    </div>
+    <div class="playlist-grid">
+      <div class="playlist-card a" onclick="startGame('A')">
+        <span class="card-letter a">A</span>
+        <div class="card-title">台灣樂團</div>
+        <div class="card-desc">美秀集團・滅火器<br>icyball・草東…</div>
+      </div>
+      <div class="playlist-card b" onclick="startGame('B')">
+        <span class="card-letter b">B</span>
+        <div class="card-title">KPOP</div>
+        <div class="card-desc">BTS・BLACKPINK<br>aespa・NewJeans…</div>
+      </div>
+      <div class="playlist-card c" onclick="startGame('C')">
+        <span class="card-letter c">C</span>
+        <div class="card-title">台灣流行</div>
+        <div class="card-desc">周杰倫・五月天<br>鄧紫棋・盧廣仲…</div>
+      </div>
+    </div>
+    <p style="text-align:center; color: var(--muted); font-size:0.78rem; letter-spacing:1px;">歌曲播放後從四個選項中選出正確答案<br>猜對得10分 · 全對共100分</p>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="screen-game" class="screen">
+    <div class="hud">
+      <div>
+        <div class="hud-label">題目</div>
+        <div class="hud-val q" id="q-counter">1 / 10</div>
+      </div>
+      <div style="text-align:center;">
+        <div class="hud-label">歌單</div>
+        <div class="hud-val" id="playlist-label" style="font-size:1rem;">A — 台灣樂團</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="hud-label">分數</div>
+        <div class="hud-val score" id="score-display">0</div>
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+    <div class="player-area">
+      <div class="visualizer" id="visualizer">
+        <div class="bar" style="height:20px"></div>
+        <div class="bar" style="height:35px"></div>
+        <div class="bar" style="height:15px"></div>
+        <div class="bar" style="height:40px"></div>
+        <div class="bar" style="height:10px"></div>
+        <div class="bar" style="height:28px"></div>
+        <div class="bar" style="height:22px"></div>
+        <div class="bar" style="height:38px"></div>
+        <div class="bar" style="height:12px"></div>
+        <div class="bar" style="height:32px"></div>
+        <div class="bar" style="height:18px"></div>
+        <div class="bar" style="height:44px"></div>
+      </div>
+      <div class="now-playing">正在播放 ▶ 猜猜是哪首歌？</div>
+
+      <div class="timer-ring" id="timer-ring">
+        <svg class="timer-svg" width="60" height="60">
+          <circle cx="30" cy="30" r="26" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
+          <circle id="timer-arc" cx="30" cy="30" r="26" fill="none" stroke="var(--accent-a)" stroke-width="3"
+            stroke-dasharray="163.36" stroke-dashoffset="0" stroke-linecap="round" transition="stroke-dashoffset 1s linear"/>
+        </svg>
+        <div class="timer-text" id="timer-text">30</div>
+      </div>
+    </div>
+
+    <div class="options-grid" id="options-grid"></div>
+    <div class="reveal-info" id="reveal-info">
+      <div class="reveal-title" id="reveal-title"></div>
+      <div class="reveal-artist" id="reveal-artist"></div>
+    </div>
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">下一題 →</button>
+    <button class="skip-btn" id="skip-btn" onclick="skipQuestion()">跳過這題 (不扣分)</button>
+
+    <audio id="audio-player" style="display:none"></audio>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="screen-result" class="screen">
+    <div class="result-header">
+      <div style="font-size:0.75rem; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-bottom:1rem;">遊戲結束</div>
+      <div class="final-score" id="final-score">0</div>
+      <div class="score-label">/ 100 分</div>
+      <div class="rank" id="rank-text"></div>
+    </div>
+    <div class="result-list" id="result-list"></div>
+    <button class="play-again-btn" onclick="goHome()">再玩一次 ↩</button>
+  </div>
+</div>
+
+<div class="feedback" id="feedback-el"></div>
+
+<script>
+const PLAYLISTS = {
+  A: {
+    label: 'A — 台灣樂團',
+    songs: [
+      { title: '愛情的大壞蛋', artist: '美秀集團 Amazing Show', yt: 'https://www.youtube.com/watch?v=lQ9UPfv5dik' },
+      { title: '戀人', artist: '美秀集團 Amazing Show', yt: 'https://www.youtube.com/watch?v=Rr8I4xn4T5E' },
+      { title: '捲菸', artist: '美秀集團 Amazing Show', yt: 'https://www.youtube.com/watch?v=R8dF3gnNqP0' },
+      { title: '不在乎', artist: 'icyball 冰球樂團', yt: 'https://www.youtube.com/watch?v=NfxKvV3mUkI' },
+      { title: '能不能和我留在台北', artist: 'icyball 冰球樂團', yt: 'https://www.youtube.com/watch?v=jP7XiMDMCZQ' },
+      { title: '醉後喜歡我', artist: 'icyball 冰球樂團', yt: 'https://www.youtube.com/watch?v=rHjh5Q3gVp0' },
+      { title: '搖啊搖', artist: 'icyball 冰球樂團', yt: 'https://www.youtube.com/watch?v=Hk3EYz5Rlfc' },
+      { title: '你到底在選擇什麼', artist: '公館青少年 GGteens', yt: 'https://www.youtube.com/watch?v=9TyiFZlVZms' },
+      { title: '要不要跟我出去走一走', artist: '公館青少年 GGteens', yt: 'https://www.youtube.com/watch?v=A8b3XJpCgZw' },
+      { title: '逐漸抽離你的慣性', artist: '公館青少年 GGteens', yt: 'https://www.youtube.com/watch?v=ZfxnwJ9RGvA' },
+      { title: '我想和你一起', artist: '溫蒂漫步 Wendy Wander', yt: 'https://www.youtube.com/watch?v=kMGj8bMFi2o' },
+      { title: '菸癮', artist: 'Who Cares 胡凱兒', yt: 'https://www.youtube.com/watch?v=CqFmQ3Tqvhs' },
+      { title: '花季', artist: 'Who Cares 胡凱兒', yt: 'https://www.youtube.com/watch?v=xPGz2mJvDDQ' },
+      { title: '離開的一路上', artist: '理想混蛋 Bestards', yt: 'https://www.youtube.com/watch?v=HT2FpE3OOPY' },
+      { title: '相愛就是說了100次對不起', artist: 'Crispy脆樂團', yt: 'https://www.youtube.com/watch?v=P9pVYCqbFxI' },
+      { title: '魚', artist: '怕胖團PAPUN BAND', yt: 'https://www.youtube.com/watch?v=p_OWJlukhTI' },
+      { title: '嗜愛動物', artist: '麋先生MIXER', yt: 'https://www.youtube.com/watch?v=dVMwX0nYhFo' },
+      { title: '長途夜車', artist: '滅火器 Fire EX.', yt: 'https://www.youtube.com/watch?v=mAtFc5AhTJg' },
+      { title: '一九四五', artist: '滅火器 Fire EX.', yt: 'https://www.youtube.com/watch?v=Wn_q3Ij8gRk' },
+      { title: '島嶼天光', artist: '滅火器 Fire EX.', yt: 'https://www.youtube.com/watch?v=xNguBb1Cl6Y' },
+      { title: '床', artist: '草東沒有派對', yt: 'https://www.youtube.com/watch?v=Ls7iy7UDnok' },
+      { title: '但', artist: '草東沒有派對', yt: 'https://www.youtube.com/watch?v=oqBzXQBHZxo' },
+      { title: '擱淺的人', artist: '康士坦的變化球 KST', yt: 'https://www.youtube.com/watch?v=y5dM2bLqNlk' },
+      { title: '美好的事可不可以發生在我身上', artist: '康士坦的變化球 KST', yt: 'https://www.youtube.com/watch?v=X1mLQxM0E4s' },
+      { title: '我還年輕 我還年輕', artist: '老王樂隊', yt: 'https://www.youtube.com/watch?v=Eo1BV9vbSgA' },
+      { title: '在這個年代，我們不浪漫', artist: '溫室雜草 Easy Weeds', yt: 'https://www.youtube.com/watch?v=Zg3j4N8EHoQ' },
+      { title: '大海', artist: '南西肯恩 NeciKen', yt: 'https://www.youtube.com/watch?v=3MkL5nHqJDU' },
+      { title: '黑暗的盡頭', artist: 'Crispy脆樂團', yt: 'https://www.youtube.com/watch?v=QHBZ9qBoJuE' },
+      { title: '留下來陪我', artist: '粗大Band / Thick Big Band', yt: 'https://www.youtube.com/watch?v=P2a7u7mhFTA' },
+      { title: '人生尾路', artist: '滅火器 Fire EX.', yt: 'https://www.youtube.com/watch?v=k6i_xqHJpPs' },
+    ]
+  },
+  B: {
+    label: 'B — KPOP',
+    songs: [
+      { title: 'Dynamite', artist: 'BTS', yt: 'https://www.youtube.com/watch?v=gdZLi9oWNZg' },
+      { title: 'Boy With Luv', artist: 'BTS', yt: 'https://www.youtube.com/watch?v=XsX3ATc3FbA' },
+      { title: 'Butter', artist: 'BTS', yt: 'https://www.youtube.com/watch?v=WMweEpGlu_U' },
+      { title: 'Spring Day', artist: 'BTS', yt: 'https://www.youtube.com/watch?v=xEeFrLSkMm8' },
+      { title: 'DDU-DU DDU-DU', artist: 'BLACKPINK', yt: 'https://www.youtube.com/watch?v=IHNzOHi8sJs' },
+      { title: 'How You Like That', artist: 'BLACKPINK', yt: 'https://www.youtube.com/watch?v=ioNng23DkIM' },
+      { title: 'Pink Venom', artist: 'BLACKPINK', yt: 'https://www.youtube.com/watch?v=f3BHnKSTNjE' },
+      { title: 'Attention', artist: 'NewJeans', yt: 'https://www.youtube.com/watch?v=js1CtxSY38I' },
+      { title: 'Hype Boy', artist: 'NewJeans', yt: 'https://www.youtube.com/watch?v=c1av7GFh0uk' },
+      { title: 'Ditto', artist: 'NewJeans', yt: 'https://www.youtube.com/watch?v=pSUydWEqKwE' },
+      { title: 'Next Level', artist: 'aespa', yt: 'https://www.youtube.com/watch?v=4TWR90KJl84' },
+      { title: 'Savage', artist: 'aespa', yt: 'https://www.youtube.com/watch?v=WPdWvnAAurg' },
+      { title: 'Psycho', artist: 'Red Velvet', yt: 'https://www.youtube.com/watch?v=uR8Mrt1IQLg' },
+      { title: 'Power', artist: 'EXO', yt: 'https://www.youtube.com/watch?v=S9usPdkOaCQ' },
+      { title: 'Growl', artist: 'EXO', yt: 'https://www.youtube.com/watch?v=FeP9MSoGVKA' },
+      { title: 'LOVE DIVE', artist: 'IVE', yt: 'https://www.youtube.com/watch?v=Y8JCsVYGCGY' },
+      { title: 'After LIKE', artist: 'IVE', yt: 'https://www.youtube.com/watch?v=uKNXHmkTByo' },
+      { title: 'Nxde', artist: '(G)I-DLE', yt: 'https://www.youtube.com/watch?v=MZ8FqFSqfGg' },
+      { title: 'TOMBOY', artist: '(G)I-DLE', yt: 'https://www.youtube.com/watch?v=R89oXTiLJCg' },
+      { title: 'God\'s Menu', artist: 'Stray Kids', yt: 'https://www.youtube.com/watch?v=TQTlCHxyuu8' },
+    ]
+  },
+  C: {
+    label: 'C — 台灣流行',
+    songs: [
+      { title: '稻香', artist: '周杰倫', yt: 'https://www.youtube.com/watch?v=zJCiO6MRWp4' },
+      { title: '晴天', artist: '周杰倫', yt: 'https://www.youtube.com/watch?v=bFInHbz8uxs' },
+      { title: '七里香', artist: '周杰倫', yt: 'https://www.youtube.com/watch?v=bX_7KGDipC8' },
+      { title: '告白氣球', artist: '周杰倫', yt: 'https://www.youtube.com/watch?v=bu7nU9Mhpyo' },
+      { title: '夜曲', artist: '周杰倫', yt: 'https://www.youtube.com/watch?v=fGMgNJcJJBg' },
+      { title: '知足', artist: '五月天', yt: 'https://www.youtube.com/watch?v=5-z1KpeTUgM' },
+      { title: '倔強', artist: '五月天', yt: 'https://www.youtube.com/watch?v=E3Ln4MkCKqM' },
+      { title: '突然好想你', artist: '五月天', yt: 'https://www.youtube.com/watch?v=Pb0t7sj5k7M' },
+      { title: '你的背包', artist: '陳奕迅', yt: 'https://www.youtube.com/watch?v=kc0uTBKqEzQ' },
+      { title: '十年', artist: '陳奕迅', yt: 'https://www.youtube.com/watch?v=b4DkNaKbx8E' },
+      { title: '好久不見', artist: '陳奕迅', yt: 'https://www.youtube.com/watch?v=ppO7kMkXBGk' },
+      { title: 'G.E.M.炮', artist: '鄧紫棋', yt: 'https://www.youtube.com/watch?v=8nQwLVmZ9Hg' },
+      { title: '泡沫', artist: '鄧紫棋', yt: 'https://www.youtube.com/watch?v=pWLJFHAJNxk' },
+      { title: '我是你的羅密歐', artist: '盧廣仲', yt: 'https://www.youtube.com/watch?v=bwV_JGNFRoI' },
+      { title: '100種生活', artist: '盧廣仲', yt: 'https://www.youtube.com/watch?v=rW7e_VBMleE' },
+      { title: '後來', artist: '劉若英', yt: 'https://www.youtube.com/watch?v=Ov7Fp-qMOls' },
+      { title: '給我一個理由忘記', artist: 'A-Lin', yt: 'https://www.youtube.com/watch?v=2NPy5J0gGKI' },
+      { title: '說好不哭', artist: '周杰倫 ft. 五月天阿信', yt: 'https://www.youtube.com/watch?v=YeP_OlmEcig' },
+      { title: '小情歌', artist: '蘇打綠 sodagreen', yt: 'https://www.youtube.com/watch?v=lLyH1DQYVT4' },
+      { title: '你被寫在我的歌裡', artist: '蘇打綠 sodagreen', yt: 'https://www.youtube.com/watch?v=0TzJwFSL7ME' },
+    ]
+  }
+};
+
+let currentPlaylist = 'A';
+let questionSongs = [];
+let currentQ = 0;
+let score = 0;
+let answered = false;
+let timerInterval = null;
+let timeLeft = 30;
+let results = [];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startGame(pl) {
+  currentPlaylist = pl;
+  const songs = PLAYLISTS[pl].songs;
+  questionSongs = shuffle(songs).slice(0, 10);
+  currentQ = 0;
+  score = 0;
+  results = [];
+
+  document.getElementById('playlist-label').textContent = PLAYLISTS[pl].label;
+  showScreen('screen-game');
+  loadQuestion();
+}
+
+function loadQuestion() {
+  answered = false;
+  clearInterval(timerInterval);
+  timeLeft = 30;
+
+  const song = questionSongs[currentQ];
+  const all = PLAYLISTS[currentPlaylist].songs;
+
+  // pick 3 wrong answers
+  let wrong = shuffle(all.filter(s => s.title !== song.title)).slice(0, 3);
+  let options = shuffle([song, ...wrong]);
+
+  // update HUD
+  document.getElementById('q-counter').textContent = `${currentQ + 1} / 10`;
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('progress-fill').style.width = `${currentQ * 10}%`;
+
+  // render options
+  const grid = document.getElementById('options-grid');
+  const keys = ['A', 'B', 'C', 'D'];
+  grid.innerHTML = '';
+  options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="opt-key">${keys[i]}</span>${opt.title}<br><small style="color:var(--muted);font-size:0.72rem;">${opt.artist}</small>`;
+    btn.dataset.index = i;
+    btn.dataset.correct = opt.title === song.title ? '1' : '0';
+    btn.onclick = () => selectAnswer(btn, song);
+    grid.appendChild(btn);
+  });
+
+  document.getElementById('reveal-info').classList.remove('show');
+  document.getElementById('next-btn').classList.remove('show');
+  document.getElementById('skip-btn').style.display = 'block';
+
+  // resume visualizer
+  document.getElementById('visualizer').classList.remove('paused');
+
+  // start timer
+  updateTimerArc(30, 30);
+  document.getElementById('timer-text').textContent = 30;
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer-text').textContent = timeLeft;
+    updateTimerArc(timeLeft, 30);
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      timeUp(song);
+    }
+  }, 1000);
+}
+
+function updateTimerArc(t, max) {
+  const circ = 2 * Math.PI * 26;
+  const offset = circ * (1 - t / max);
+  const arc = document.getElementById('timer-arc');
+  arc.style.strokeDashoffset = offset;
+  if (t <= 10) arc.style.stroke = 'var(--accent-a)';
+  else arc.style.stroke = 'var(--accent-c)';
+}
+
+function selectAnswer(btn, song) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const isCorrect = btn.dataset.correct === '1';
+  document.getElementById('skip-btn').style.display = 'none';
+  document.getElementById('visualizer').classList.add('paused');
+
+  // highlight buttons
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => {
+    b.disabled = true;
+    if (b.dataset.correct === '1') b.classList.add('correct');
+  });
+  if (!isCorrect) btn.classList.add('wrong');
+
+  const pts = isCorrect ? 10 : 0;
+  if (isCorrect) score += 10;
+
+  results.push({ song, correct: isCorrect, pts });
+  document.getElementById('score-display').textContent = score;
+
+  showFeedback(isCorrect);
+  showReveal(song);
+
+  setTimeout(() => {
+    document.getElementById('next-btn').classList.add('show');
+  }, 500);
+}
+
+function timeUp(song) {
+  if (answered) return;
+  answered = true;
+  document.getElementById('skip-btn').style.display = 'none';
+  document.getElementById('visualizer').classList.add('paused');
+
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => {
+    b.disabled = true;
+    if (b.dataset.correct === '1') b.classList.add('correct');
+  });
+
+  results.push({ song, correct: false, pts: 0 });
+  showFeedback(false, '⏱');
+  showReveal(song);
+
+  setTimeout(() => {
+    document.getElementById('next-btn').classList.add('show');
+  }, 500);
+}
+
+function skipQuestion() {
+  if (answered) return;
+  const song = questionSongs[currentQ];
+  clearInterval(timerInterval);
+  answered = true;
+  document.getElementById('skip-btn').style.display = 'none';
+  document.getElementById('visualizer').classList.add('paused');
+
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => {
+    b.disabled = true;
+    if (b.dataset.correct === '1') b.classList.add('correct');
+  });
+
+  results.push({ song, correct: false, pts: 0 });
+  showReveal(song);
+
+  setTimeout(() => {
+    document.getElementById('next-btn').classList.add('show');
+  }, 300);
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= 10) {
+    showResults();
+  } else {
+    loadQuestion();
+  }
+}
+
+function showFeedback(correct, custom) {
+  const el = document.getElementById('feedback-el');
+  el.textContent = custom || (correct ? '✓ 正確！' : '✗ 答錯了');
+  el.className = 'feedback ' + (correct ? 'correct-fb' : 'wrong-fb');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 900);
+}
+
+function showReveal(song) {
+  const ri = document.getElementById('reveal-info');
+  document.getElementById('reveal-title').textContent = '🎵 ' + song.title;
+  document.getElementById('reveal-artist').textContent = song.artist;
+  ri.classList.add('show');
+}
+
+function showResults() {
+  document.getElementById('progress-fill').style.width = '100%';
+  showScreen('screen-result');
+  document.getElementById('final-score').textContent = score;
+
+  const ranks = [
+    [100, '🏆 完美！你是音樂天才！'],
+    [80, '🥇 太厲害了！'],
+    [60, '🥈 不錯喔！'],
+    [40, '🥉 繼續加油！'],
+    [0, '🎵 下次一定更好！']
+  ];
+  const rank = ranks.find(r => score >= r[0]);
+  document.getElementById('rank-text').textContent = rank[1];
+
+  const list = document.getElementById('result-list');
+  list.innerHTML = '';
+  results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'result-item';
+    div.innerHTML = `
+      <span class="result-num">${i + 1}</span>
+      <div class="result-song">
+        <div class="result-song-title">${r.song.title}</div>
+        <div class="result-song-artist">${r.song.artist}</div>
+      </div>
+      <span class="result-pts ${r.correct ? 'got' : 'missed'}">${r.correct ? '+10' : '0'}</span>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function goHome() {
+  clearInterval(timerInterval);
+  showScreen('screen-title');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// keyboard: 1-4 or A-D
+document.addEventListener('keydown', e => {
+  const screen = document.querySelector('.screen.active');
+  if (!screen || screen.id !== 'screen-game') return;
+  const map = { '1': 0, '2': 1, '3': 2, '4': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3, 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+  if (e.key in map && !answered) {
+    const btns = document.querySelectorAll('.option-btn');
+    if (btns[map[e.key]]) btns[map[e.key]].click();
+  }
+  if ((e.key === 'Enter' || e.key === ' ') && answered) {
+    const nextBtn = document.getElementById('next-btn');
+    if (nextBtn.classList.contains('show')) nextQuestion();
+  }
+});
+</script>
+</body>
+</html>
