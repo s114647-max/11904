@@ -3,570 +3,632 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>猜歌遊戲 Music Quiz</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>猜歌大挑戰</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #0a0a0f;
-    --bg2: #12121a;
-    --bg3: #1a1a26;
-    --border: rgba(255,255,255,0.08);
-    --text: #f0f0f8;
-    --muted: #8888aa;
-    --accent-a: #ff4d6d;
-    --accent-b: #7c3aed;
-    --accent-c: #0ea5e9;
-    --gold: #fbbf24;
-    --green: #22c55e;
-    --red: #ef4444;
-    --radius: 12px;
+    --c-bg: #0a0a0f;
+    --c-surface: #13131a;
+    --c-surface2: #1c1c27;
+    --c-border: rgba(255,255,255,0.08);
+    --c-text: #f0f0f8;
+    --c-muted: #8888aa;
+    --c-accent: #7c6fff;
+    --c-accent2: #ff6fa8;
+    --c-gold: #ffd166;
+    --c-green: #06d6a0;
+    --c-red: #ef233c;
+    --c-blue: #4cc9f0;
   }
-
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    background: var(--bg);
-    color: var(--text);
+    background: var(--c-bg);
+    color: var(--c-text);
     font-family: 'Noto Sans TC', sans-serif;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 0;
     overflow-x: hidden;
   }
 
-  .noise {
+  /* BG grid */
+  body::before {
+    content: '';
     position: fixed;
     inset: 0;
+    background-image:
+      linear-gradient(rgba(124,111,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,111,255,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
     pointer-events: none;
     z-index: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    opacity: 0.4;
   }
 
-  .container { position: relative; z-index: 1; width: 100%; max-width: 680px; padding: 2rem 1.5rem 4rem; }
-
-  /* ─── SCREENS ─── */
-  .screen { display: none; }
-  .screen.active { display: block; }
-
-  /* ─── TITLE SCREEN ─── */
-  .title-glow {
-    font-family: 'Space Mono', monospace;
-    font-size: clamp(2rem, 8vw, 3.5rem);
-    font-weight: 700;
-    letter-spacing: -2px;
-    line-height: 1;
-    background: linear-gradient(135deg, var(--accent-a), var(--accent-b), var(--accent-c));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-align: center;
-    margin-bottom: 0.5rem;
-  }
-  .title-sub {
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.95rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    margin-bottom: 3rem;
-  }
-
-  .playlist-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 2rem; }
-
-  .playlist-card {
+  .screen {
+    display: none;
     position: relative;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
+    z-index: 1;
+    min-height: 100vh;
+  }
+  .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1.5rem; }
+
+  /* ─── INTRO SCREEN ─── */
+  #screen-intro { gap: 3rem; }
+
+  .logo-area { text-align: center; }
+  .logo-icon {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, var(--c-accent), var(--c-accent2));
+    border-radius: 24px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0 40px rgba(124,111,255,0.4);
+  }
+  .logo-title {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, var(--c-accent), var(--c-accent2), var(--c-gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+  }
+  .logo-sub { color: var(--c-muted); font-size: 1rem; margin-top: 0.5rem; }
+
+  .playlist-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    width: 100%;
+    max-width: 640px;
+  }
+  .playlist-btn {
+    background: var(--c-surface);
+    border: 1.5px solid var(--c-border);
+    border-radius: 16px;
     padding: 1.5rem 1rem;
-    text-align: center;
     cursor: pointer;
-    transition: transform 0.18s, border-color 0.18s, background 0.18s;
-    background: var(--bg2);
+    text-align: center;
+    transition: all 0.2s;
+    color: var(--c-text);
+    font-family: inherit;
+    position: relative;
     overflow: hidden;
   }
-  .playlist-card::before {
+  .playlist-btn::before {
     content: '';
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     opacity: 0;
-    transition: opacity 0.18s;
+    transition: opacity 0.2s;
+    border-radius: 14px;
   }
-  .playlist-card.a::before { background: radial-gradient(circle at 50% 0, rgba(255,77,109,0.15), transparent 70%); }
-  .playlist-card.b::before { background: radial-gradient(circle at 50% 0, rgba(124,58,237,0.15), transparent 70%); }
-  .playlist-card.c::before { background: radial-gradient(circle at 50% 0, rgba(14,165,233,0.15), transparent 70%); }
-  .playlist-card:hover::before { opacity: 1; }
-  .playlist-card:hover { transform: translateY(-4px); }
-  .playlist-card.a:hover { border-color: var(--accent-a); }
-  .playlist-card.b:hover { border-color: var(--accent-b); }
-  .playlist-card.c:hover { border-color: var(--accent-c); }
+  .playlist-btn.a::before { background: linear-gradient(135deg, rgba(76,201,240,0.15), transparent); }
+  .playlist-btn.b::before { background: linear-gradient(135deg, rgba(255,111,168,0.15), transparent); }
+  .playlist-btn.c::before { background: linear-gradient(135deg, rgba(255,209,102,0.15), transparent); }
+  .playlist-btn:hover::before { opacity: 1; }
+  .playlist-btn:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255,255,255,0.2);
+  }
+  .playlist-btn.selected.a { border-color: var(--c-blue); box-shadow: 0 0 20px rgba(76,201,240,0.3); }
+  .playlist-btn.selected.b { border-color: var(--c-accent2); box-shadow: 0 0 20px rgba(255,111,168,0.3); }
+  .playlist-btn.selected.c { border-color: var(--c-gold); box-shadow: 0 0 20px rgba(255,209,102,0.3); }
 
-  .card-letter {
-    font-family: 'Space Mono', monospace;
+  .playlist-letter {
     font-size: 2.5rem;
-    font-weight: 700;
+    font-weight: 900;
+    font-family: 'Space Grotesk', sans-serif;
+    line-height: 1;
     margin-bottom: 0.5rem;
-    display: block;
   }
-  .card-letter.a { color: var(--accent-a); }
-  .card-letter.b { color: var(--accent-b); }
-  .card-letter.c { color: var(--accent-c); }
-  .card-title { font-size: 0.8rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 0.3rem; }
-  .card-desc { font-size: 0.7rem; color: var(--muted); }
+  .a .playlist-letter { color: var(--c-blue); }
+  .b .playlist-letter { color: var(--c-accent2); }
+  .c .playlist-letter { color: var(--c-gold); }
+
+  .playlist-name { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .playlist-desc { font-size: 0.72rem; color: var(--c-muted); }
+
+  .start-btn {
+    background: linear-gradient(135deg, var(--c-accent), var(--c-accent2));
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 1rem 3rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 30px rgba(124,111,255,0.4);
+    letter-spacing: 0.05em;
+  }
+  .start-btn:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 40px rgba(124,111,255,0.5); }
+  .start-btn:active { transform: scale(0.98); }
+  .start-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
   /* ─── GAME SCREEN ─── */
-  .hud {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding: 0.75rem 1rem;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+  #screen-game {
+    justify-content: flex-start;
+    padding-top: 1.5rem;
+    gap: 0;
   }
-  .hud-label { font-size: 0.7rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; }
-  .hud-val { font-family: 'Space Mono', monospace; font-size: 1.2rem; font-weight: 700; }
-  .hud-val.score { color: var(--gold); }
-  .hud-val.q { color: var(--text); }
 
-  .progress-bar {
-    height: 3px;
-    background: var(--bg3);
-    border-radius: 3px;
+  .game-header {
+    width: 100%; max-width: 700px;
+    display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 1.5rem;
-    overflow: hidden;
+    gap: 1rem;
+  }
+  .progress-wrap { flex: 1; }
+  .progress-label { font-size: 0.75rem; color: var(--c-muted); margin-bottom: 6px; }
+  .progress-bar {
+    height: 6px; background: var(--c-surface2);
+    border-radius: 99px; overflow: hidden;
   }
   .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
-    transition: width 0.4s;
-    border-radius: 3px;
+    background: linear-gradient(90deg, var(--c-accent), var(--c-accent2));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .score-badge {
+    background: var(--c-surface2);
+    border: 1px solid var(--c-border);
+    border-radius: 10px;
+    padding: 0.4rem 0.9rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--c-gold);
+    white-space: nowrap;
   }
 
-  /* music visualizer */
   .player-area {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    width: 100%; max-width: 700px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 20px;
     padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    text-align: center;
+    margin-bottom: 1.25rem;
+    display: flex; flex-direction: column; align-items: center; gap: 1rem;
   }
-  .visualizer {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 4px;
-    height: 48px;
+  .now-playing-label { font-size: 0.75rem; color: var(--c-muted); letter-spacing: 0.12em; text-transform: uppercase; }
+  .waveform {
+    display: flex; gap: 4px; align-items: center; height: 48px;
+  }
+  .wave-bar {
+    width: 4px; background: var(--c-accent); border-radius: 99px;
+    animation: wave 1.2s ease-in-out infinite;
+    opacity: 0.7;
+  }
+  .wave-bar:nth-child(1) { animation-delay: 0s; height: 20px; }
+  .wave-bar:nth-child(2) { animation-delay: 0.1s; height: 35px; }
+  .wave-bar:nth-child(3) { animation-delay: 0.2s; height: 28px; }
+  .wave-bar:nth-child(4) { animation-delay: 0.3s; height: 42px; }
+  .wave-bar:nth-child(5) { animation-delay: 0.4s; height: 22px; }
+  .wave-bar:nth-child(6) { animation-delay: 0.5s; height: 38px; }
+  .wave-bar:nth-child(7) { animation-delay: 0.6s; height: 30px; }
+  .wave-bar:nth-child(8) { animation-delay: 0.7s; height: 44px; }
+  .wave-bar:nth-child(9) { animation-delay: 0.8s; height: 18px; }
+  .wave-bar:nth-child(10) { animation-delay: 0.9s; height: 36px; }
+  .wave-bar:nth-child(11) { animation-delay: 1.0s; height: 26px; }
+  .wave-bar:nth-child(12) { animation-delay: 1.1s; height: 40px; }
+  .waveform.paused .wave-bar { animation-play-state: paused; }
+
+  @keyframes wave {
+    0%, 100% { transform: scaleY(1); opacity: 0.7; }
+    50% { transform: scaleY(0.4); opacity: 1; }
+  }
+
+  .timer-row {
+    display: flex; align-items: center; gap: 1rem; width: 100%;
+  }
+  .timer-circle {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--c-surface2);
+    border: 2px solid var(--c-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; font-weight: 700;
+    flex-shrink: 0;
+    position: relative;
+    transition: color 0.3s;
+  }
+  .timer-circle.urgent { color: var(--c-red); border-color: var(--c-red); animation: pulse 0.6s ease-in-out infinite alternate; }
+  @keyframes pulse { to { box-shadow: 0 0 15px rgba(239,35,60,0.4); } }
+
+  .hint-text {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--c-muted);
+    line-height: 1.5;
+  }
+  .hint-text strong { color: var(--c-text); }
+
+  .hidden-yt { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+  .options-grid {
+    width: 100%; max-width: 700px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
     margin-bottom: 1rem;
   }
-  .bar {
-    width: 4px;
-    border-radius: 2px;
-    background: var(--accent-a);
-    animation: bounce 0.6s ease-in-out infinite alternate;
-    transform-origin: bottom;
-  }
-  .bar:nth-child(2) { animation-delay: 0.1s; background: #ff6b6b; }
-  .bar:nth-child(3) { animation-delay: 0.2s; background: var(--accent-b); }
-  .bar:nth-child(4) { animation-delay: 0.05s; background: #a78bfa; }
-  .bar:nth-child(5) { animation-delay: 0.15s; background: var(--accent-c); }
-  .bar:nth-child(6) { animation-delay: 0.25s; background: #38bdf8; }
-  .bar:nth-child(7) { animation-delay: 0.08s; }
-  .bar:nth-child(8) { animation-delay: 0.18s; }
-  .bar:nth-child(9) { animation-delay: 0.12s; }
-  .bar:nth-child(10) { animation-delay: 0.22s; }
-  .bar:nth-child(11) { animation-delay: 0.03s; }
-  .bar:nth-child(12) { animation-delay: 0.17s; }
-  .visualizer.paused .bar { animation-play-state: paused; }
-
-  @keyframes bounce {
-    from { height: 4px; }
-    to { height: 40px; }
-  }
-
-  .now-playing { font-size: 0.72rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
-  .playing-hint { font-size: 0.9rem; color: var(--text); margin-top: 4px; }
-
-  .timer-ring { position: relative; display: inline-block; margin: 0.5rem auto; }
-  .timer-svg { transform: rotate(-90deg); }
-  .timer-text {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Space Mono', monospace;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  /* options */
-  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
   .option-btn {
-    background: var(--bg2);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1rem;
+    background: var(--c-surface);
+    border: 1.5px solid var(--c-border);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
     cursor: pointer;
-    transition: transform 0.15s, border-color 0.15s, background 0.15s;
     text-align: left;
-    color: var(--text);
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 0.85rem;
-    line-height: 1.4;
-    position: relative;
-    overflow: hidden;
+    transition: all 0.18s;
+    color: var(--c-text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    display: flex; align-items: center; gap: 0.75rem;
+    position: relative; overflow: hidden;
   }
-  .option-btn:hover:not(:disabled) { transform: scale(1.02); border-color: rgba(255,255,255,0.25); background: var(--bg3); }
-  .option-btn .opt-key {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--muted);
-    display: block;
-    margin-bottom: 4px;
+  .option-btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: rgba(124,111,255,0.08);
+    opacity: 0; transition: opacity 0.18s;
   }
-  .option-btn.correct { border-color: var(--green); background: rgba(34,197,94,0.12); }
-  .option-btn.wrong { border-color: var(--red); background: rgba(239,68,68,0.12); }
-  .option-btn:disabled { cursor: default; }
+  .option-btn:hover::after { opacity: 1; }
+  .option-btn:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
+  .option-btn:active { transform: scale(0.98); }
+  .option-btn:disabled { cursor: default; transform: none; }
+  .option-btn.correct { border-color: var(--c-green) !important; background: rgba(6,214,160,0.1) !important; color: var(--c-green); }
+  .option-btn.wrong { border-color: var(--c-red) !important; background: rgba(239,35,60,0.1) !important; color: var(--c-red); }
+  .option-btn.reveal { border-color: rgba(255,255,255,0.25); background: var(--c-surface2); }
 
-  .skip-btn {
-    width: 100%;
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.6rem;
-    color: var(--muted);
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
-    margin-top: 0.5rem;
+  .option-key {
+    width: 28px; height: 28px; flex-shrink: 0;
+    background: var(--c-surface2);
+    border: 1px solid var(--c-border);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700;
+    font-family: 'Space Grotesk', sans-serif;
+    transition: background 0.18s;
   }
-  .skip-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .option-btn.correct .option-key { background: rgba(6,214,160,0.2); border-color: var(--c-green); color: var(--c-green); }
+  .option-btn.wrong .option-key { background: rgba(239,35,60,0.2); border-color: var(--c-red); color: var(--c-red); }
 
-  /* feedback overlay */
-  .feedback {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    font-family: 'Space Mono', monospace;
-    font-size: 3rem;
-    font-weight: 700;
+  .option-song { flex: 1; }
+  .option-title { font-weight: 600; font-size: 0.9rem; line-height: 1.3; }
+  .option-artist { font-size: 0.75rem; color: var(--c-muted); margin-top: 2px; }
+  .option-btn.correct .option-artist,
+  .option-btn.wrong .option-artist { color: inherit; opacity: 0.7; }
+
+  .feedback-bar {
+    width: 100%; max-width: 700px;
+    min-height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; font-weight: 600;
+    border-radius: 12px;
+    padding: 0.75rem 1.25rem;
+    text-align: center;
+    transition: all 0.3s;
     opacity: 0;
-    pointer-events: none;
-    z-index: 100;
-    transition: opacity 0.2s, transform 0.2s;
   }
-  .feedback.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  .feedback.correct-fb { color: var(--green); }
-  .feedback.wrong-fb { color: var(--red); }
+  .feedback-bar.show { opacity: 1; }
+  .feedback-bar.correct-fb { background: rgba(6,214,160,0.12); color: var(--c-green); border: 1px solid rgba(6,214,160,0.3); }
+  .feedback-bar.wrong-fb { background: rgba(239,35,60,0.12); color: var(--c-red); border: 1px solid rgba(239,35,60,0.3); }
 
   /* ─── RESULT SCREEN ─── */
-  .result-header { text-align: center; margin-bottom: 2rem; }
-  .final-score {
-    font-family: 'Space Mono', monospace;
-    font-size: 5rem;
-    font-weight: 700;
-    color: var(--gold);
+  #screen-result { gap: 2rem; text-align: center; }
+
+  .result-icon {
+    width: 100px; height: 100px;
+    border-radius: 28px;
+    background: linear-gradient(135deg, var(--c-accent), var(--c-accent2));
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 48px;
+    box-shadow: 0 0 60px rgba(124,111,255,0.4);
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+  .result-title { font-size: 2rem; font-weight: 900; }
+  .result-score-display {
+    font-size: 5rem; font-weight: 900;
+    font-family: 'Space Grotesk', sans-serif;
+    background: linear-gradient(90deg, var(--c-gold), var(--c-accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
     line-height: 1;
   }
-  .score-label { color: var(--muted); font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 0.5rem; }
-  .rank { font-size: 1.5rem; font-weight: 700; margin-top: 1rem; }
+  .result-meta { color: var(--c-muted); font-size: 1rem; }
 
-  .result-list { margin-bottom: 2rem; }
-  .result-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--border);
+  .result-breakdown {
+    width: 100%; max-width: 500px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .breakdown-row {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.7rem 1.1rem;
+    border-bottom: 1px solid var(--c-border);
     font-size: 0.85rem;
   }
-  .result-item:last-child { border-bottom: none; }
-  .result-num { font-family: 'Space Mono', monospace; color: var(--muted); min-width: 24px; }
-  .result-song { flex: 1; }
-  .result-song-title { color: var(--text); font-weight: 500; }
-  .result-song-artist { font-size: 0.75rem; color: var(--muted); }
-  .result-pts { font-family: 'Space Mono', monospace; font-weight: 700; }
-  .result-pts.got { color: var(--green); }
-  .result-pts.missed { color: var(--red); }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-q { color: var(--c-muted); min-width: 28px; font-size: 0.75rem; }
+  .breakdown-song { flex: 1; text-align: left; line-height: 1.3; }
+  .breakdown-song span { display: block; font-size: 0.72rem; color: var(--c-muted); }
+  .breakdown-pts {
+    font-weight: 700; font-size: 0.9rem;
+    padding: 3px 10px; border-radius: 99px;
+    min-width: 48px; text-align: center;
+  }
+  .breakdown-pts.hit { background: rgba(6,214,160,0.15); color: var(--c-green); }
+  .breakdown-pts.miss { background: rgba(239,35,60,0.1); color: var(--c-red); }
 
-  .play-again-btn {
-    width: 100%;
-    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
-    border: none;
-    border-radius: var(--radius);
-    padding: 1rem;
-    color: #fff;
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
+  .replay-btn {
+    background: var(--c-surface);
+    color: var(--c-text);
+    border: 1.5px solid var(--c-border);
+    border-radius: 12px;
+    padding: 0.75rem 2rem;
+    font-size: 1rem; font-weight: 600;
+    font-family: inherit;
     cursor: pointer;
-    transition: opacity 0.2s, transform 0.15s;
+    transition: all 0.2s;
   }
-  .play-again-btn:hover { opacity: 0.9; transform: scale(1.01); }
+  .replay-btn:hover { border-color: var(--c-accent); color: var(--c-accent); }
 
-  /* reveal */
-  .reveal-info {
-    margin-top: 0.75rem;
-    padding: 0.75rem 1rem;
-    background: var(--bg3);
-    border-radius: var(--radius);
-    font-size: 0.85rem;
-    display: none;
-  }
-  .reveal-info.show { display: block; }
-  .reveal-title { font-weight: 700; color: var(--text); }
-  .reveal-artist { color: var(--muted); font-size: 0.78rem; }
-  .next-btn {
-    margin-top: 0.75rem;
-    width: 100%;
-    background: var(--accent-b);
-    border: none;
-    border-radius: var(--radius);
-    padding: 0.75rem;
-    color: #fff;
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: opacity 0.2s;
-    display: none;
-  }
-  .next-btn.show { display: block; }
-  .next-btn:hover { opacity: 0.85; }
-
-  @media (max-width: 480px) {
+  @media (max-width: 500px) {
     .playlist-grid { grid-template-columns: 1fr; }
     .options-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
-<div class="noise"></div>
-<div class="container">
 
-  <!-- TITLE SCREEN -->
-  <div id="screen-title" class="screen active">
-    <div style="padding-top: 3rem; margin-bottom: 3rem;">
-      <div class="title-glow">猜歌遊戲</div>
-      <div class="title-sub">Music Quiz · 10 Questions · 100 pts</div>
-    </div>
+<!-- ─── INTRO ─── -->
+<div id="screen-intro" class="screen active">
+  <div class="logo-area">
+    <div class="logo-icon">🎵</div>
+    <div class="logo-title">猜歌大挑戰</div>
+    <div class="logo-sub">聽音辨歌 · 十題百分</div>
+  </div>
+
+  <div style="text-align:center">
+    <div style="font-size:0.8rem;color:var(--c-muted);margin-bottom:1rem;letter-spacing:0.08em">選擇你的歌單</div>
     <div class="playlist-grid">
-      <div class="playlist-card a" onclick="startGame('A')">
-        <span class="card-letter a">A</span>
-        <div class="card-title">台灣樂團</div>
-        <div class="card-desc">美秀集團・滅火器<br>icyball・草東…</div>
-      </div>
-      <div class="playlist-card b" onclick="startGame('B')">
-        <span class="card-letter b">B</span>
-        <div class="card-title">KPOP</div>
-        <div class="card-desc">BTS・BLACKPINK<br>aespa・NewJeans…</div>
-      </div>
-      <div class="playlist-card c" onclick="startGame('C')">
-        <span class="card-letter c">C</span>
-        <div class="card-title">台灣流行</div>
-        <div class="card-desc">周杰倫・五月天<br>鄧紫棋・盧廣仲…</div>
-      </div>
+      <button class="playlist-btn a" onclick="selectPlaylist('A')">
+        <div class="playlist-letter">A</div>
+        <div class="playlist-name">台灣樂團</div>
+        <div class="playlist-desc">獨立／搖滾／民謠</div>
+      </button>
+      <button class="playlist-btn b" onclick="selectPlaylist('B')">
+        <div class="playlist-letter">B</div>
+        <div class="playlist-name">KPOP</div>
+        <div class="playlist-desc">韓國流行音樂</div>
+      </button>
+      <button class="playlist-btn c" onclick="selectPlaylist('C')">
+        <div class="playlist-letter">C</div>
+        <div class="playlist-name">台灣流行</div>
+        <div class="playlist-desc">華語主流歌曲</div>
+      </button>
     </div>
-    <p style="text-align:center; color: var(--muted); font-size:0.78rem; letter-spacing:1px;">歌曲播放後從四個選項中選出正確答案<br>猜對得10分 · 全對共100分</p>
   </div>
 
-  <!-- GAME SCREEN -->
-  <div id="screen-game" class="screen">
-    <div class="hud">
-      <div>
-        <div class="hud-label">題目</div>
-        <div class="hud-val q" id="q-counter">1 / 10</div>
-      </div>
-      <div style="text-align:center;">
-        <div class="hud-label">歌單</div>
-        <div class="hud-val" id="playlist-label" style="font-size:1rem;">A — 台灣樂團</div>
-      </div>
-      <div style="text-align:right;">
-        <div class="hud-label">分數</div>
-        <div class="hud-val score" id="score-display">0</div>
-      </div>
-    </div>
-    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <button class="start-btn" id="start-btn" onclick="startGame()" disabled>開始遊戲</button>
 
-    <div class="player-area">
-      <div class="visualizer" id="visualizer">
-        <div class="bar" style="height:20px"></div>
-        <div class="bar" style="height:35px"></div>
-        <div class="bar" style="height:15px"></div>
-        <div class="bar" style="height:40px"></div>
-        <div class="bar" style="height:10px"></div>
-        <div class="bar" style="height:28px"></div>
-        <div class="bar" style="height:22px"></div>
-        <div class="bar" style="height:38px"></div>
-        <div class="bar" style="height:12px"></div>
-        <div class="bar" style="height:32px"></div>
-        <div class="bar" style="height:18px"></div>
-        <div class="bar" style="height:44px"></div>
-      </div>
-      <div class="now-playing">正在播放 ▶ 猜猜是哪首歌？</div>
-
-      <div class="timer-ring" id="timer-ring">
-        <svg class="timer-svg" width="60" height="60">
-          <circle cx="30" cy="30" r="26" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
-          <circle id="timer-arc" cx="30" cy="30" r="26" fill="none" stroke="var(--accent-a)" stroke-width="3"
-            stroke-dasharray="163.36" stroke-dashoffset="0" stroke-linecap="round" transition="stroke-dashoffset 1s linear"/>
-        </svg>
-        <div class="timer-text" id="timer-text">30</div>
-      </div>
-    </div>
-
-    <div class="options-grid" id="options-grid"></div>
-    <div class="reveal-info" id="reveal-info">
-      <div class="reveal-title" id="reveal-title"></div>
-      <div class="reveal-artist" id="reveal-artist"></div>
-    </div>
-    <button class="next-btn" id="next-btn" onclick="nextQuestion()">下一題 →</button>
-    <button class="skip-btn" id="skip-btn" onclick="skipQuestion()">跳過這題 (不扣分)</button>
-
-    <audio id="audio-player" style="display:none"></audio>
-  </div>
-
-  <!-- RESULT SCREEN -->
-  <div id="screen-result" class="screen">
-    <div class="result-header">
-      <div style="font-size:0.75rem; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-bottom:1rem;">遊戲結束</div>
-      <div class="final-score" id="final-score">0</div>
-      <div class="score-label">/ 100 分</div>
-      <div class="rank" id="rank-text"></div>
-    </div>
-    <div class="result-list" id="result-list"></div>
-    <button class="play-again-btn" onclick="goHome()">再玩一次 ↩</button>
+  <div style="font-size:0.75rem;color:var(--c-muted);text-align:center;max-width:320px;line-height:1.6">
+    🎧 請確保音量開啟<br>
+    按 <strong style="color:var(--c-text)">1 2 3 4</strong> 可用鍵盤快速作答
   </div>
 </div>
 
-<div class="feedback" id="feedback-el"></div>
+<!-- ─── GAME ─── -->
+<div id="screen-game" class="screen">
+  <div class="game-header">
+    <div class="progress-wrap">
+      <div class="progress-label" id="q-label">第 1 / 10 題</div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="score-badge">🏆 <span id="score-display">0</span></div>
+  </div>
+
+  <div class="player-area">
+    <div class="now-playing-label">🎵 正在播放</div>
+    <div class="waveform" id="waveform">
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+    </div>
+    <div class="timer-row">
+      <div class="timer-circle" id="timer-circle">30</div>
+      <div class="hint-text" id="hint-text">聽聽看是哪一首歌？選出正確答案吧！</div>
+    </div>
+  </div>
+
+  <div class="options-grid" id="options-grid"></div>
+  <div class="feedback-bar" id="feedback-bar"></div>
+
+  <div class="hidden-yt" id="yt-container">
+    <div id="yt-player"></div>
+  </div>
+</div>
+
+<!-- ─── RESULT ─── -->
+<div id="screen-result" class="screen">
+  <div class="result-icon" id="result-icon">🏆</div>
+  <div class="result-title" id="result-title">遊戲結束！</div>
+  <div class="result-score-display"><span id="final-score">0</span> 分</div>
+  <div class="result-meta" id="result-meta"></div>
+  <div class="result-breakdown" id="result-breakdown"></div>
+  <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center">
+    <button class="start-btn" onclick="restartSame()">再玩一次</button>
+    <button class="replay-btn" onclick="goHome()">換歌單</button>
+  </div>
+</div>
 
 <script>
+// ─── PLAYLISTS ───
 const PLAYLISTS = {
   A: {
-    label: 'A — 台灣樂團',
+    name: '台灣樂團',
     songs: [
-      { title: '愛情的大壞蛋', artist: '美秀集團 Amazing Show', yt: 'https://www.youtube.com/watch?v=lQ9UPfv5dik' },
-      { title: '戀人', artist: '美秀集團 Amazing Show', yt: 'https://www.youtube.com/watch?v=Rr8I4xn4T5E' },
-      { title: '捲菸', artist: '美秀集團 Amazing Show', yt: 'https://www.youtube.com/watch?v=R8dF3gnNqP0' },
-      { title: '不在乎', artist: 'icyball 冰球樂團', yt: 'https://www.youtube.com/watch?v=NfxKvV3mUkI' },
-      { title: '能不能和我留在台北', artist: 'icyball 冰球樂團', yt: 'https://www.youtube.com/watch?v=jP7XiMDMCZQ' },
-      { title: '醉後喜歡我', artist: 'icyball 冰球樂團', yt: 'https://www.youtube.com/watch?v=rHjh5Q3gVp0' },
-      { title: '搖啊搖', artist: 'icyball 冰球樂團', yt: 'https://www.youtube.com/watch?v=Hk3EYz5Rlfc' },
-      { title: '你到底在選擇什麼', artist: '公館青少年 GGteens', yt: 'https://www.youtube.com/watch?v=9TyiFZlVZms' },
-      { title: '要不要跟我出去走一走', artist: '公館青少年 GGteens', yt: 'https://www.youtube.com/watch?v=A8b3XJpCgZw' },
-      { title: '逐漸抽離你的慣性', artist: '公館青少年 GGteens', yt: 'https://www.youtube.com/watch?v=ZfxnwJ9RGvA' },
-      { title: '我想和你一起', artist: '溫蒂漫步 Wendy Wander', yt: 'https://www.youtube.com/watch?v=kMGj8bMFi2o' },
-      { title: '菸癮', artist: 'Who Cares 胡凱兒', yt: 'https://www.youtube.com/watch?v=CqFmQ3Tqvhs' },
-      { title: '花季', artist: 'Who Cares 胡凱兒', yt: 'https://www.youtube.com/watch?v=xPGz2mJvDDQ' },
-      { title: '離開的一路上', artist: '理想混蛋 Bestards', yt: 'https://www.youtube.com/watch?v=HT2FpE3OOPY' },
-      { title: '相愛就是說了100次對不起', artist: 'Crispy脆樂團', yt: 'https://www.youtube.com/watch?v=P9pVYCqbFxI' },
-      { title: '魚', artist: '怕胖團PAPUN BAND', yt: 'https://www.youtube.com/watch?v=p_OWJlukhTI' },
-      { title: '嗜愛動物', artist: '麋先生MIXER', yt: 'https://www.youtube.com/watch?v=dVMwX0nYhFo' },
-      { title: '長途夜車', artist: '滅火器 Fire EX.', yt: 'https://www.youtube.com/watch?v=mAtFc5AhTJg' },
-      { title: '一九四五', artist: '滅火器 Fire EX.', yt: 'https://www.youtube.com/watch?v=Wn_q3Ij8gRk' },
-      { title: '島嶼天光', artist: '滅火器 Fire EX.', yt: 'https://www.youtube.com/watch?v=xNguBb1Cl6Y' },
-      { title: '床', artist: '草東沒有派對', yt: 'https://www.youtube.com/watch?v=Ls7iy7UDnok' },
-      { title: '但', artist: '草東沒有派對', yt: 'https://www.youtube.com/watch?v=oqBzXQBHZxo' },
-      { title: '擱淺的人', artist: '康士坦的變化球 KST', yt: 'https://www.youtube.com/watch?v=y5dM2bLqNlk' },
-      { title: '美好的事可不可以發生在我身上', artist: '康士坦的變化球 KST', yt: 'https://www.youtube.com/watch?v=X1mLQxM0E4s' },
-      { title: '我還年輕 我還年輕', artist: '老王樂隊', yt: 'https://www.youtube.com/watch?v=Eo1BV9vbSgA' },
-      { title: '在這個年代，我們不浪漫', artist: '溫室雜草 Easy Weeds', yt: 'https://www.youtube.com/watch?v=Zg3j4N8EHoQ' },
-      { title: '大海', artist: '南西肯恩 NeciKen', yt: 'https://www.youtube.com/watch?v=3MkL5nHqJDU' },
-      { title: '黑暗的盡頭', artist: 'Crispy脆樂團', yt: 'https://www.youtube.com/watch?v=QHBZ9qBoJuE' },
-      { title: '留下來陪我', artist: '粗大Band / Thick Big Band', yt: 'https://www.youtube.com/watch?v=P2a7u7mhFTA' },
-      { title: '人生尾路', artist: '滅火器 Fire EX.', yt: 'https://www.youtube.com/watch?v=k6i_xqHJpPs' },
+      { title: '愛情的大壞蛋', artist: '美秀集團', ytId: 'NRx_RM9hJ0o' },
+      { title: '戀人', artist: '美秀集團', ytId: 'EyZnYiuI_W4' },
+      { title: '捲菸', artist: '美秀集團', ytId: 'GcGGCGcINNY' },
+      { title: '醉後喜歡我', artist: 'icyball 冰球樂團', ytId: 'VfWOINrgT4U' },
+      { title: '能不能和我留在台北', artist: 'icyball 冰球樂團', ytId: 'HKxLLRTPBXk' },
+      { title: '不在乎', artist: 'icyball 冰球樂團', ytId: 'BhIXHdKTPUk' },
+      { title: '搖啊搖', artist: 'icyball 冰球樂團', ytId: 'LhXbVlXkqb8' },
+      { title: '離開的一路上', artist: '理想混蛋', ytId: 'rlNM-cF0R4s' },
+      { title: '菸癮', artist: 'Who Cares 胡凱兒', ytId: 'PsR3j8DFN0s' },
+      { title: '花季', artist: 'Who Cares 胡凱兒', ytId: 'UJqhJEqKBug' },
+      { title: '長途夜車', artist: '滅火器 Fire EX.', ytId: 'hPzOzxLqrxI' },
+      { title: '十二月的妳', artist: '滅火器 Fire EX.', ytId: 'dRqJVDPy5dM' },
+      { title: '島嶼天光', artist: '滅火器 Fire EX.', ytId: 'SItGSXBBOUk' },
+      { title: '一九四五', artist: '滅火器 Fire EX.', ytId: 'U2kpxvl1JH0' },
+      { title: '我想和你一起', artist: '溫蒂漫步', ytId: 'yRm1AX3Y0HY' },
+      { title: '相愛就是說了100次對不起', artist: 'Crispy脆樂團', ytId: 'IhXW3K6mRwY' },
+      { title: '黑暗的盡頭', artist: 'Crispy脆樂團', ytId: '7M3mz4EWL6Y' },
+      { title: '揹上悲傷北上', artist: 'Crispy脆樂團', ytId: 'EBxYFCxPpvY' },
+      { title: '床', artist: '草東沒有派對', ytId: 'LKAQ7XOIqh4' },
+      { title: '我還年輕 我還年輕', artist: '老王樂隊', ytId: 'YiBhDNe_fNI' },
+      { title: '擱淺的人', artist: '康士坦的變化球', ytId: 'k3SLv0dyrno' },
+      { title: '魚', artist: '怕胖團 PAPUN BAND', ytId: '7QTF_3kVjjY' },
+      { title: '嗜愛動物', artist: '麋先生 MIXER', ytId: 'UuXGh1Ge_6g' },
+      { title: '在這個年代，我們不浪漫', artist: '溫室雜草', ytId: 'hKt-RFzZdEk' },
+      { title: '留下來陪我', artist: '粗大Band', ytId: 'gFfB7F2cKmQ' },
+      { title: '大海 Ocean', artist: '南西肯恩 NeciKen', ytId: 'p3w0KBUR6Cs' },
+      { title: '美好的事可不可以發生在我身上', artist: '康士坦的變化球', ytId: 'D4UNSKdGxdI' },
     ]
   },
   B: {
-    label: 'B — KPOP',
+    name: 'KPOP',
     songs: [
-      { title: 'Dynamite', artist: 'BTS', yt: 'https://www.youtube.com/watch?v=gdZLi9oWNZg' },
-      { title: 'Boy With Luv', artist: 'BTS', yt: 'https://www.youtube.com/watch?v=XsX3ATc3FbA' },
-      { title: 'Butter', artist: 'BTS', yt: 'https://www.youtube.com/watch?v=WMweEpGlu_U' },
-      { title: 'Spring Day', artist: 'BTS', yt: 'https://www.youtube.com/watch?v=xEeFrLSkMm8' },
-      { title: 'DDU-DU DDU-DU', artist: 'BLACKPINK', yt: 'https://www.youtube.com/watch?v=IHNzOHi8sJs' },
-      { title: 'How You Like That', artist: 'BLACKPINK', yt: 'https://www.youtube.com/watch?v=ioNng23DkIM' },
-      { title: 'Pink Venom', artist: 'BLACKPINK', yt: 'https://www.youtube.com/watch?v=f3BHnKSTNjE' },
-      { title: 'Attention', artist: 'NewJeans', yt: 'https://www.youtube.com/watch?v=js1CtxSY38I' },
-      { title: 'Hype Boy', artist: 'NewJeans', yt: 'https://www.youtube.com/watch?v=c1av7GFh0uk' },
-      { title: 'Ditto', artist: 'NewJeans', yt: 'https://www.youtube.com/watch?v=pSUydWEqKwE' },
-      { title: 'Next Level', artist: 'aespa', yt: 'https://www.youtube.com/watch?v=4TWR90KJl84' },
-      { title: 'Savage', artist: 'aespa', yt: 'https://www.youtube.com/watch?v=WPdWvnAAurg' },
-      { title: 'Psycho', artist: 'Red Velvet', yt: 'https://www.youtube.com/watch?v=uR8Mrt1IQLg' },
-      { title: 'Power', artist: 'EXO', yt: 'https://www.youtube.com/watch?v=S9usPdkOaCQ' },
-      { title: 'Growl', artist: 'EXO', yt: 'https://www.youtube.com/watch?v=FeP9MSoGVKA' },
-      { title: 'LOVE DIVE', artist: 'IVE', yt: 'https://www.youtube.com/watch?v=Y8JCsVYGCGY' },
-      { title: 'After LIKE', artist: 'IVE', yt: 'https://www.youtube.com/watch?v=uKNXHmkTByo' },
-      { title: 'Nxde', artist: '(G)I-DLE', yt: 'https://www.youtube.com/watch?v=MZ8FqFSqfGg' },
-      { title: 'TOMBOY', artist: '(G)I-DLE', yt: 'https://www.youtube.com/watch?v=R89oXTiLJCg' },
-      { title: 'God\'s Menu', artist: 'Stray Kids', yt: 'https://www.youtube.com/watch?v=TQTlCHxyuu8' },
+      { title: 'Dynamite', artist: 'BTS', ytId: 'gdZLi9oWNZg' },
+      { title: 'Butter', artist: 'BTS', ytId: 'WMweEpGlu_U' },
+      { title: 'DNA', artist: 'BTS', ytId: '0ldBMQI0L0o' },
+      { title: 'IDOL', artist: 'BTS', ytId: 'pBuZEGYXA6E' },
+      { title: 'Boy With Luv', artist: 'BTS ft. Halsey', ytId: 'XsX3ATc3FbA' },
+      { title: 'Spring Day', artist: 'BTS', ytId: 'xEeFrLSkMm8' },
+      { title: 'Fake Love', artist: 'BTS', ytId: '7C2z4GqqS5E' },
+      { title: 'Kill This Love', artist: 'BLACKPINK', ytId: '2S24-y0Ij3Y' },
+      { title: 'DDU-DU DDU-DU', artist: 'BLACKPINK', ytId: 'IHNzOHi8sJs' },
+      { title: 'Pink Venom', artist: 'BLACKPINK', ytId: 'gQlMMD8auMs' },
+      { title: 'How You Like That', artist: 'BLACKPINK', ytId: 'ioNng23DkIM' },
+      { title: 'Lovesick Girls', artist: 'BLACKPINK', ytId: 'fK_zwl-UDFo' },
+      { title: 'Fancy', artist: 'TWICE', ytId: 'kOHB85vDuow' },
+      { title: 'Feel Special', artist: 'TWICE', ytId: '4IfOnEMblck' },
+      { title: 'More & More', artist: 'TWICE', ytId: 'b2PGEKlbMaU' },
+      { title: 'Growl', artist: 'EXO', ytId: 'yWfsla_Uh80' },
+      { title: 'Love Shot', artist: 'EXO', ytId: 'pSudEWBAYRE' },
+      { title: 'Psycho', artist: 'Red Velvet', ytId: 'uR8Mrt1IpXg' },
+      { title: 'Monster', artist: 'Red Velvet - Irene & Seulgi', ytId: '15O3MKH1eTw' },
+      { title: 'Peek-A-Boo', artist: 'Red Velvet', ytId: 'FXFJiqdemAA' },
+      { title: 'Next Level', artist: 'aespa', ytId: '4TWR90KJl84' },
+      { title: 'Savage', artist: 'aespa', ytId: 'lbM3nNYbczs' },
+      { title: 'Genie', artist: 'Girls Generation', ytId: 'U2CZVLCT3lY' },
+      { title: 'Eight', artist: 'IU', ytId: 'lvXTKqwFMGw' },
+      { title: 'Celebrity', artist: 'IU', ytId: 'fBnABiZpMcg' },
+      { title: 'Good Day', artist: 'IU', ytId: 'jeqdYqsrsA0' },
     ]
   },
   C: {
-    label: 'C — 台灣流行',
+    name: '台灣流行',
     songs: [
-      { title: '稻香', artist: '周杰倫', yt: 'https://www.youtube.com/watch?v=zJCiO6MRWp4' },
-      { title: '晴天', artist: '周杰倫', yt: 'https://www.youtube.com/watch?v=bFInHbz8uxs' },
-      { title: '七里香', artist: '周杰倫', yt: 'https://www.youtube.com/watch?v=bX_7KGDipC8' },
-      { title: '告白氣球', artist: '周杰倫', yt: 'https://www.youtube.com/watch?v=bu7nU9Mhpyo' },
-      { title: '夜曲', artist: '周杰倫', yt: 'https://www.youtube.com/watch?v=fGMgNJcJJBg' },
-      { title: '知足', artist: '五月天', yt: 'https://www.youtube.com/watch?v=5-z1KpeTUgM' },
-      { title: '倔強', artist: '五月天', yt: 'https://www.youtube.com/watch?v=E3Ln4MkCKqM' },
-      { title: '突然好想你', artist: '五月天', yt: 'https://www.youtube.com/watch?v=Pb0t7sj5k7M' },
-      { title: '你的背包', artist: '陳奕迅', yt: 'https://www.youtube.com/watch?v=kc0uTBKqEzQ' },
-      { title: '十年', artist: '陳奕迅', yt: 'https://www.youtube.com/watch?v=b4DkNaKbx8E' },
-      { title: '好久不見', artist: '陳奕迅', yt: 'https://www.youtube.com/watch?v=ppO7kMkXBGk' },
-      { title: 'G.E.M.炮', artist: '鄧紫棋', yt: 'https://www.youtube.com/watch?v=8nQwLVmZ9Hg' },
-      { title: '泡沫', artist: '鄧紫棋', yt: 'https://www.youtube.com/watch?v=pWLJFHAJNxk' },
-      { title: '我是你的羅密歐', artist: '盧廣仲', yt: 'https://www.youtube.com/watch?v=bwV_JGNFRoI' },
-      { title: '100種生活', artist: '盧廣仲', yt: 'https://www.youtube.com/watch?v=rW7e_VBMleE' },
-      { title: '後來', artist: '劉若英', yt: 'https://www.youtube.com/watch?v=Ov7Fp-qMOls' },
-      { title: '給我一個理由忘記', artist: 'A-Lin', yt: 'https://www.youtube.com/watch?v=2NPy5J0gGKI' },
-      { title: '說好不哭', artist: '周杰倫 ft. 五月天阿信', yt: 'https://www.youtube.com/watch?v=YeP_OlmEcig' },
-      { title: '小情歌', artist: '蘇打綠 sodagreen', yt: 'https://www.youtube.com/watch?v=lLyH1DQYVT4' },
-      { title: '你被寫在我的歌裡', artist: '蘇打綠 sodagreen', yt: 'https://www.youtube.com/watch?v=0TzJwFSL7ME' },
+      { title: '七里香', artist: '周杰倫', ytId: 'ZGZZV-oAiS8' },
+      { title: '夜曲', artist: '周杰倫', ytId: 'yw7-gZ5e9Nk' },
+      { title: '稻香', artist: '周杰倫', ytId: 'sVEjE8D9Xg8' },
+      { title: '告白氣球', artist: '周杰倫', ytId: 'bu7nU9Mhpz4' },
+      { title: '晴天', artist: '周杰倫', ytId: 'wRgfYyp3Czk' },
+      { title: '說好不哭', artist: '周杰倫 ft. 五月天', ytId: 'BvHqiYJeUMw' },
+      { title: '愛情萬歲', artist: '陳奕迅', ytId: 'P9kL7xKaGlI' },
+      { title: '浮誇', artist: '陳奕迅', ytId: 'XaLOJEjHgKU' },
+      { title: '好久不見', artist: '陳奕迅', ytId: 'nDOyRPiKILY' },
+      { title: '富士山下', artist: '陳奕迅', ytId: 'jrGkXdxiMxA' },
+      { title: '倒帶', artist: '蔡依林', ytId: 'IZuCVnpPVBk' },
+      { title: '說愛你', artist: '蔡依林', ytId: 'F0AIVJMQC1M' },
+      { title: '玫瑰少年', artist: '蔡依林', ytId: 'biFD2xHnmS4' },
+      { title: '勇敢', artist: '張惠妹', ytId: 'L2-aN50-2TY' },
+      { title: '我要快樂', artist: '張惠妹', ytId: 'bPB7RfH3Hj4' },
+      { title: '超人不會飛', artist: '五月天', ytId: 'Kt_5nfJ-rlw' },
+      { title: '你不是真正的快樂', artist: '五月天', ytId: 'u2H0gk9MMRY' },
+      { title: '倔強', artist: '五月天', ytId: 'E_7bQNhcfpQ' },
+      { title: '突然好想你', artist: '五月天', ytId: 'l6uq07Ql1M0' },
+      { title: '乾杯', artist: '五月天', ytId: 'eW-gKHNH-9g' },
+      { title: '給我一個理由忘記', artist: 'A-Lin', ytId: 'rAyS7Z2-YlM' },
+      { title: '聽說愛情回來過', artist: '劉若英', ytId: '9iGFEjlVmaA' },
+      { title: '後來', artist: '劉若英', ytId: 'BuOMSTmx1zg' },
+      { title: '小幸運', artist: '田馥甄', ytId: 'WxiJAP2ZYHU' },
+      { title: '你就不要想起我', artist: '田馥甄', ytId: 'rqCMJhbXZxc' },
+      { title: '說謊', artist: '林宥嘉', ytId: 'ZR2CtKoFSI0' },
+      { title: '你啊你啊', artist: '林宥嘉', ytId: 'RzMeJaSSBhs' },
     ]
   }
 };
 
-let currentPlaylist = 'A';
-let questionSongs = [];
+// ─── STATE ───
+let selectedPlaylist = null;
+let player = null;
+let ytReady = false;
+let questions = [];
 let currentQ = 0;
 let score = 0;
-let answered = false;
+let history = [];
 let timerInterval = null;
 let timeLeft = 30;
-let results = [];
+let answered = false;
+let currentAnswer = null;
 
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+// ─── UI HELPERS ───
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
-function startGame(pl) {
-  currentPlaylist = pl;
-  const songs = PLAYLISTS[pl].songs;
-  questionSongs = shuffle(songs).slice(0, 10);
+function selectPlaylist(key) {
+  selectedPlaylist = key;
+  document.querySelectorAll('.playlist-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.playlist-btn.' + key.toLowerCase()).classList.add('selected');
+  document.getElementById('start-btn').disabled = false;
+}
+
+// ─── YOUTUBE API ───
+function loadYouTubeAPI() {
+  if (document.getElementById('yt-api')) return;
+  const tag = document.createElement('script');
+  tag.id = 'yt-api';
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+}
+
+window.onYouTubeIframeAPIReady = function() {
+  ytReady = true;
+  player = new YT.Player('yt-player', {
+    height: '1', width: '1',
+    playerVars: { autoplay: 0, controls: 0, disablekb: 1 },
+    events: {
+      onStateChange: function(e) {
+        if (e.data === YT.PlayerState.ENDED && !answered) {
+          timeLeft = 0;
+          handleTimeout();
+        }
+      }
+    }
+  });
+};
+
+loadYouTubeAPI();
+
+// ─── GAME LOGIC ───
+function startGame() {
+  const pl = PLAYLISTS[selectedPlaylist];
+  const pool = [...pl.songs];
+  shuffle(pool);
+  questions = pool.slice(0, 10);
   currentQ = 0;
   score = 0;
-  results = [];
-
-  document.getElementById('playlist-label').textContent = PLAYLISTS[pl].label;
+  history = [];
   showScreen('screen-game');
   loadQuestion();
 }
@@ -574,137 +636,143 @@ function startGame(pl) {
 function loadQuestion() {
   answered = false;
   clearInterval(timerInterval);
-  timeLeft = 30;
 
-  const song = questionSongs[currentQ];
-  const all = PLAYLISTS[currentPlaylist].songs;
+  const correct = questions[currentQ];
+  currentAnswer = correct;
 
-  // pick 3 wrong answers
-  let wrong = shuffle(all.filter(s => s.title !== song.title)).slice(0, 3);
-  let options = shuffle([song, ...wrong]);
+  // build 3 wrong choices from same playlist
+  const pl = PLAYLISTS[selectedPlaylist];
+  const others = pl.songs.filter(s => s.title !== correct.title);
+  shuffle(others);
+  const choices = [correct, ...others.slice(0, 3)];
+  shuffle(choices);
 
-  // update HUD
-  document.getElementById('q-counter').textContent = `${currentQ + 1} / 10`;
+  // update header
+  document.getElementById('q-label').textContent = `第 ${currentQ + 1} / 10 題`;
+  document.getElementById('progress-fill').style.width = `${(currentQ / 10) * 100}%`;
   document.getElementById('score-display').textContent = score;
-  document.getElementById('progress-fill').style.width = `${currentQ * 10}%`;
+
+  // enable waveform
+  document.getElementById('waveform').classList.remove('paused');
+
+  // feedback reset
+  const fb = document.getElementById('feedback-bar');
+  fb.className = 'feedback-bar';
+  fb.textContent = '';
+
+  // hint
+  document.getElementById('hint-text').textContent = '仔細聆聽，選出正確答案！';
 
   // render options
   const grid = document.getElementById('options-grid');
-  const keys = ['A', 'B', 'C', 'D'];
   grid.innerHTML = '';
-  options.forEach((opt, i) => {
+  const keys = ['1', '2', '3', '4'];
+  choices.forEach((song, i) => {
     const btn = document.createElement('button');
     btn.className = 'option-btn';
-    btn.innerHTML = `<span class="opt-key">${keys[i]}</span>${opt.title}<br><small style="color:var(--muted);font-size:0.72rem;">${opt.artist}</small>`;
-    btn.dataset.index = i;
-    btn.dataset.correct = opt.title === song.title ? '1' : '0';
-    btn.onclick = () => selectAnswer(btn, song);
+    btn.dataset.title = song.title;
+    btn.innerHTML = `
+      <div class="option-key">${keys[i]}</div>
+      <div class="option-song">
+        <div class="option-title">${song.title}</div>
+        <div class="option-artist">${song.artist}</div>
+      </div>`;
+    btn.onclick = () => submitAnswer(song.title, correct.title);
     grid.appendChild(btn);
   });
 
-  document.getElementById('reveal-info').classList.remove('show');
-  document.getElementById('next-btn').classList.remove('show');
-  document.getElementById('skip-btn').style.display = 'block';
-
-  // resume visualizer
-  document.getElementById('visualizer').classList.remove('paused');
-
-  // start timer
-  updateTimerArc(30, 30);
-  document.getElementById('timer-text').textContent = 30;
-
+  // timer
+  timeLeft = 30;
+  updateTimer(30);
   timerInterval = setInterval(() => {
     timeLeft--;
-    document.getElementById('timer-text').textContent = timeLeft;
-    updateTimerArc(timeLeft, 30);
+    updateTimer(timeLeft);
     if (timeLeft <= 0) {
       clearInterval(timerInterval);
-      timeUp(song);
+      handleTimeout();
     }
   }, 1000);
+
+  // play music
+  playTrack(correct.ytId);
 }
 
-function updateTimerArc(t, max) {
-  const circ = 2 * Math.PI * 26;
-  const offset = circ * (1 - t / max);
-  const arc = document.getElementById('timer-arc');
-  arc.style.strokeDashoffset = offset;
-  if (t <= 10) arc.style.stroke = 'var(--accent-a)';
-  else arc.style.stroke = 'var(--accent-c)';
+function playTrack(ytId) {
+  if (player && ytReady && player.loadVideoById) {
+    player.loadVideoById({ videoId: ytId, startSeconds: 15 });
+    player.setVolume(100);
+  }
 }
 
-function selectAnswer(btn, song) {
+function stopMusic() {
+  if (player && ytReady && player.stopVideo) {
+    player.stopVideo();
+  }
+  document.getElementById('waveform').classList.add('paused');
+}
+
+function updateTimer(t) {
+  const el = document.getElementById('timer-circle');
+  el.textContent = t;
+  el.classList.toggle('urgent', t <= 10);
+}
+
+function submitAnswer(chosen, correct) {
   if (answered) return;
   answered = true;
   clearInterval(timerInterval);
+  stopMusic();
 
-  const isCorrect = btn.dataset.correct === '1';
-  document.getElementById('skip-btn').style.display = 'none';
-  document.getElementById('visualizer').classList.add('paused');
-
-  // highlight buttons
-  const btns = document.querySelectorAll('.option-btn');
-  btns.forEach(b => {
-    b.disabled = true;
-    if (b.dataset.correct === '1') b.classList.add('correct');
-  });
-  if (!isCorrect) btn.classList.add('wrong');
-
+  const isCorrect = chosen === correct;
   const pts = isCorrect ? 10 : 0;
-  if (isCorrect) score += 10;
+  score += pts;
+  history.push({ q: currentQ + 1, song: correct, artist: currentAnswer.artist, correct: isCorrect, pts });
 
-  results.push({ song, correct: isCorrect, pts });
+  // style buttons
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.disabled = true;
+    if (btn.dataset.title === correct) btn.classList.add('correct');
+    else if (btn.dataset.title === chosen && !isCorrect) btn.classList.add('wrong');
+    else btn.classList.add('reveal');
+  });
+
+  const fb = document.getElementById('feedback-bar');
+  if (isCorrect) {
+    fb.className = 'feedback-bar correct-fb show';
+    fb.textContent = '🎉 答對了！＋10 分';
+    document.getElementById('hint-text').textContent = `正確答案：${correct}`;
+  } else {
+    fb.className = 'feedback-bar wrong-fb show';
+    fb.textContent = `❌ 答錯了！正確答案是「${correct}」`;
+    document.getElementById('hint-text').textContent = `這首歌是「${correct}」，下次加油！`;
+  }
+
   document.getElementById('score-display').textContent = score;
 
-  showFeedback(isCorrect);
-  showReveal(song);
-
-  setTimeout(() => {
-    document.getElementById('next-btn').classList.add('show');
-  }, 500);
+  setTimeout(nextQuestion, 2200);
 }
 
-function timeUp(song) {
+function handleTimeout() {
   if (answered) return;
   answered = true;
-  document.getElementById('skip-btn').style.display = 'none';
-  document.getElementById('visualizer').classList.add('paused');
-
-  const btns = document.querySelectorAll('.option-btn');
-  btns.forEach(b => {
-    b.disabled = true;
-    if (b.dataset.correct === '1') b.classList.add('correct');
-  });
-
-  results.push({ song, correct: false, pts: 0 });
-  showFeedback(false, '⏱');
-  showReveal(song);
-
-  setTimeout(() => {
-    document.getElementById('next-btn').classList.add('show');
-  }, 500);
-}
-
-function skipQuestion() {
-  if (answered) return;
-  const song = questionSongs[currentQ];
   clearInterval(timerInterval);
-  answered = true;
-  document.getElementById('skip-btn').style.display = 'none';
-  document.getElementById('visualizer').classList.add('paused');
+  stopMusic();
 
-  const btns = document.querySelectorAll('.option-btn');
-  btns.forEach(b => {
-    b.disabled = true;
-    if (b.dataset.correct === '1') b.classList.add('correct');
+  const correct = currentAnswer.title;
+  history.push({ q: currentQ + 1, song: correct, artist: currentAnswer.artist, correct: false, pts: 0 });
+
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.disabled = true;
+    if (btn.dataset.title === correct) btn.classList.add('correct');
+    else btn.classList.add('reveal');
   });
 
-  results.push({ song, correct: false, pts: 0 });
-  showReveal(song);
+  const fb = document.getElementById('feedback-bar');
+  fb.className = 'feedback-bar wrong-fb show';
+  fb.textContent = `⏰ 時間到！正確答案是「${correct}」`;
+  document.getElementById('hint-text').textContent = `這首歌是「${correct}」`;
 
-  setTimeout(() => {
-    document.getElementById('next-btn').classList.add('show');
-  }, 300);
+  setTimeout(nextQuestion, 2200);
 }
 
 function nextQuestion() {
@@ -716,77 +784,59 @@ function nextQuestion() {
   }
 }
 
-function showFeedback(correct, custom) {
-  const el = document.getElementById('feedback-el');
-  el.textContent = custom || (correct ? '✓ 正確！' : '✗ 答錯了');
-  el.className = 'feedback ' + (correct ? 'correct-fb' : 'wrong-fb');
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 900);
-}
-
-function showReveal(song) {
-  const ri = document.getElementById('reveal-info');
-  document.getElementById('reveal-title').textContent = '🎵 ' + song.title;
-  document.getElementById('reveal-artist').textContent = song.artist;
-  ri.classList.add('show');
-}
-
+// ─── RESULTS ───
 function showResults() {
-  document.getElementById('progress-fill').style.width = '100%';
-  showScreen('screen-result');
+  stopMusic();
   document.getElementById('final-score').textContent = score;
+  document.getElementById('progress-fill').style.width = '100%';
 
-  const ranks = [
-    [100, '🏆 完美！你是音樂天才！'],
-    [80, '🥇 太厲害了！'],
-    [60, '🥈 不錯喔！'],
-    [40, '🥉 繼續加油！'],
-    [0, '🎵 下次一定更好！']
-  ];
-  const rank = ranks.find(r => score >= r[0]);
-  document.getElementById('rank-text').textContent = rank[1];
+  const correct = history.filter(h => h.correct).length;
+  let icon = '😢', title = '繼續加油！';
+  if (score >= 90) { icon = '🏆'; title = '完美！你是音樂天才！'; }
+  else if (score >= 70) { icon = '🎉'; title = '很厲害！'; }
+  else if (score >= 50) { icon = '🎵'; title = '還不錯喔！'; }
+  else if (score >= 30) { icon = '💪'; title = '繼續加油！'; }
 
-  const list = document.getElementById('result-list');
-  list.innerHTML = '';
-  results.forEach((r, i) => {
-    const div = document.createElement('div');
-    div.className = 'result-item';
-    div.innerHTML = `
-      <span class="result-num">${i + 1}</span>
-      <div class="result-song">
-        <div class="result-song-title">${r.song.title}</div>
-        <div class="result-song-artist">${r.song.artist}</div>
-      </div>
-      <span class="result-pts ${r.correct ? 'got' : 'missed'}">${r.correct ? '+10' : '0'}</span>
-    `;
-    list.appendChild(div);
-  });
+  document.getElementById('result-icon').textContent = icon;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-meta').textContent = `答對 ${correct} / 10 題 · 歌單：${PLAYLISTS[selectedPlaylist].name}`;
+
+  const bd = document.getElementById('result-breakdown');
+  bd.innerHTML = history.map(h => `
+    <div class="breakdown-row">
+      <div class="breakdown-q">Q${h.q}</div>
+      <div class="breakdown-song">${h.song}<span>${h.artist}</span></div>
+      <div class="breakdown-pts ${h.correct ? 'hit' : 'miss'}">${h.correct ? '+10' : '0'}</div>
+    </div>`).join('');
+
+  showScreen('screen-result');
 }
 
+function restartSame() { startGame(); }
 function goHome() {
-  clearInterval(timerInterval);
-  showScreen('screen-title');
+  selectedPlaylist = null;
+  document.querySelectorAll('.playlist-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('start-btn').disabled = true;
+  showScreen('screen-intro');
 }
 
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-
-// keyboard: 1-4 or A-D
+// ─── KEYBOARD ───
 document.addEventListener('keydown', e => {
-  const screen = document.querySelector('.screen.active');
-  if (!screen || screen.id !== 'screen-game') return;
-  const map = { '1': 0, '2': 1, '3': 2, '4': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3, 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
-  if (e.key in map && !answered) {
+  if (['1','2','3','4'].includes(e.key)) {
+    const idx = parseInt(e.key) - 1;
     const btns = document.querySelectorAll('.option-btn');
-    if (btns[map[e.key]]) btns[map[e.key]].click();
-  }
-  if ((e.key === 'Enter' || e.key === ' ') && answered) {
-    const nextBtn = document.getElementById('next-btn');
-    if (nextBtn.classList.contains('show')) nextQuestion();
+    if (btns[idx] && !btns[idx].disabled) btns[idx].click();
   }
 });
+
+// ─── UTILS ───
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 </script>
 </body>
 </html>
