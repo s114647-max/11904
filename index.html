@@ -55,11 +55,11 @@ body {
 .progress-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .4s ease; }
 .score-badge { font-size:13px; font-weight:600; color:var(--accent); white-space:nowrap; }
 
-/* YouTube player */
+/* YouTube area */
 .yt-wrap {
   position: relative;
   width: 100%;
-  padding-bottom: 56.25%; /* 16:9 */
+  padding-bottom: 56.25%;
   border-radius: var(--radius);
   overflow: hidden;
   background: #000;
@@ -71,24 +71,43 @@ body {
   width: 100%; height: 100%;
   border: none;
 }
-/* blur overlay — revealed after answer */
-.yt-blur-overlay {
+
+/* Overlay — shown before user clicks play */
+.yt-overlay {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  background: rgba(13,13,13,0.55);
+  inset: 0;
+  z-index: 3;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 8px;
-  transition: opacity .35s;
-  z-index: 2;
-  pointer-events: none;
+  gap: 16px;
+  background: #111;
+  transition: opacity .3s;
 }
-.yt-blur-overlay.hidden { opacity: 0; pointer-events: none; }
-.yt-blur-label {
-  font-size: 15px; color: rgba(240,236,228,0.5);
-  letter-spacing: 0.05em;
+.yt-overlay.transparent {
+  background: transparent;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.yt-overlay.gone { opacity: 0; pointer-events: none; }
+
+.play-big-btn {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; color: #111;
+  transition: transform .15s, opacity .15s;
+  flex-shrink: 0;
+}
+.play-big-btn:hover { transform: scale(1.08); }
+.play-big-btn:active { transform: scale(0.95); }
+.overlay-label {
+  font-size: 15px; color: rgba(240,236,228,0.6);
+  letter-spacing: 0.04em;
+}
+.overlay-sublabel {
+  font-size: 12px; color: rgba(240,236,228,0.35);
 }
 
 .card {
@@ -137,7 +156,7 @@ body {
   margin-bottom: 1rem;
 }
 .feedback-bar.correct { display:flex; background:var(--correct-dim); border:0.5px solid var(--correct); color:var(--correct); }
-.feedback-bar.wrong { display:flex; background:var(--wrong-dim); border:0.5px solid var(--wrong); color:var(--wrong); }
+.feedback-bar.wrong   { display:flex; background:var(--wrong-dim);   border:0.5px solid var(--wrong);   color:var(--wrong); }
 .feedback-bar span { color: var(--text); font-size:13px; }
 
 .next-btn {
@@ -151,6 +170,7 @@ body {
 .next-btn:active { transform: scale(0.97); }
 .next-btn.visible { display: block; }
 
+/* screens */
 .screen {
   width: 100%; max-width: 720px;
   background: var(--surface);
@@ -160,8 +180,8 @@ body {
 }
 .screen h2 { font-size: 24px; font-weight: 600; margin-bottom: .5rem; }
 .screen > p { color: var(--muted); font-size: 15px; line-height: 1.7; margin-bottom: 1.5rem; }
-.screen .big-score { font-size: 72px; font-weight: 700; color: var(--accent); line-height: 1; margin: 1.5rem 0; }
-.screen .rank { font-size: 18px; color: var(--muted); margin-bottom: 1.5rem; }
+.big-score { font-size: 72px; font-weight: 700; color: var(--accent); line-height: 1; margin: 1.5rem 0; }
+.rank { font-size: 18px; color: var(--muted); margin-bottom: 1.5rem; }
 .start-btn, .restart-btn {
   background: var(--accent); color: #111;
   border: none; border-radius: var(--radius-sm);
@@ -183,7 +203,6 @@ body {
 .result-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .result-dot.ok { background: var(--correct); }
 .result-dot.no { background: var(--wrong); }
-.result-song { flex: 1; }
 .result-band { font-size: 12px; color: var(--muted); margin-top: 1px; }
 </style>
 </head>
@@ -200,10 +219,9 @@ body {
 <!-- START SCREEN -->
 <div class="screen" id="startScreen">
   <h2>準備好了嗎？</h2>
-  <p>遊戲共十題，每題播放一段 YouTube MV，<br>
-  從四個選項中猜出正確的歌名。<br><br>
-  🎬 影片會自動播放並<strong>隱藏畫面</strong>（防止看到歌名），<br>
-  只靠耳朵來判斷！答題後才揭開影片。<br><br>
+  <p>遊戲共十題，每題播放一段 YouTube MV。<br>
+  影片畫面會模糊，只靠耳朵猜歌！<br>
+  答題後才揭開畫面確認答案。<br><br>
   鍵盤 A / B / C / D 選答，Enter 下一題。</p>
   <button class="start-btn" onclick="startGame()">開始遊戲</button>
 </div>
@@ -217,16 +235,16 @@ body {
       <span class="score-badge" id="scoreBadge">0 分</span>
     </div>
 
-    <!-- YouTube player with blur overlay -->
     <div class="yt-wrap">
       <iframe id="ytFrame" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-      <div class="yt-blur-overlay" id="blurOverlay">
-        <span style="font-size:32px;">🎵</span>
-        <span class="yt-blur-label">仔細聆聽，這是哪首歌？</span>
+      <!-- Overlay: before click = solid dark, after click = blur -->
+      <div class="yt-overlay" id="ytOverlay">
+        <button class="play-big-btn" id="playBtn" onclick="userClickPlay()">▶</button>
+        <span class="overlay-label">點擊播放，開始聆聽</span>
+        <span class="overlay-sublabel">影片會模糊，只聽聲音猜歌</span>
       </div>
     </div>
 
-    <!-- Options -->
     <div class="card">
       <div class="options-grid" id="optionsGrid"></div>
     </div>
@@ -239,7 +257,7 @@ body {
     <div style="text-align:center;">
       <button class="next-btn" id="nextBtn" onclick="nextQuestion()">下一題 →</button>
     </div>
-    <p class="keyboard-hint">鍵盤快捷鍵：A B C D 選答 · Enter / N 下一題</p>
+    <p class="keyboard-hint">鍵盤：A B C D 選答 · Enter / N 下一題</p>
   </div>
 </div>
 
@@ -255,52 +273,49 @@ body {
 
 <script>
 const SONGS = [
-  { song:'愛情的大壞蛋', band:'美秀集團', yt:'BnMuQvQyxdY' },
-  { song:'戀人',         band:'美秀集團', yt:'QxXYCJV2Lf0' },
-  { song:'我要你愛',     band:'美秀集團', yt:'3fEJpqGdoMw' },
-  { song:'電火王',       band:'美秀集團', yt:'0WDQZ7Y3Rew' },
-  { song:'捲菸',         band:'美秀集團', yt:'S4JLJVVjevI' },
-  { song:'不在乎',       band:'icyball 冰球樂團', yt:'aIhsZ4PdGT4' },
-  { song:'能不能和我留在台北', band:'icyball 冰球樂團', yt:'Ef3kY8TqRAo' },
-  { song:'醉後喜歡我',   band:'icyball 冰球樂團', yt:'P_ZKqTYZnbA' },
-  { song:'搖啊搖',       band:'icyball 冰球樂團', yt:'7vXa3f0lmFI' },
-  { song:'你到底在選擇什麼', band:'公館青少年 GGteens', yt:'gZGf2dPqjq4' },
-  { song:'要不要跟我出去走一走', band:'公館青少年 GGteens', yt:'WFo5E3fJbLk' },
-  { song:'逐漸抽離你的慣性', band:'公館青少年 GGteens', yt:'WA7FHBHaBMI' },
-  { song:'我想和你一起', band:'溫蒂漫步 Wendy Wander', yt:'2I3V-kBBh5U' },
-  { song:'留下來陪我',   band:'粗大Band', yt:'u7G3RPEK0W8' },
-  { song:'大薯',         band:'粗大Band', yt:'GyCFwOqjpBc' },
-  { song:'菸癮',         band:'Who Cares 胡凱兒', yt:'VrQjV0UzPTI' },
-  { song:'花季',         band:'Who Cares 胡凱兒', yt:'zDxVzGl9rms' },
-  { song:'離開的一路上', band:'理想混蛋 Bestards', yt:'DpBLw17q1WY' },
-  { song:'相愛就是說了100次對不起', band:'Crispy脆樂團', yt:'PfcKDO2HB5w' },
-  { song:'揹上悲傷北上', band:'Crispy脆樂團', yt:'y9lbSmPOSF8' },
-  { song:'黑暗的盡頭',   band:'Crispy脆樂團', yt:'1nS_LLQIG2k' },
-  { song:'魚',           band:'怕胖團 PAPUN BAND', yt:'EGjSQNKbbA0' },
-  { song:'嗜愛動物',     band:'麋先生 MIXER', yt:'TjsNKsTr_IY' },
-  { song:'長途夜車',     band:'滅火器 Fire EX.', yt:'V8s81RKEWLE' },
-  { song:'島嶼天光',     band:'滅火器 Fire EX.', yt:'Fvh28b-Cdi4' },
-  { song:'人生尾路',     band:'滅火器 Fire EX.', yt:'hJPmrKMO2Hs' },
-  { song:'床',           band:'草東沒有派對', yt:'sLrDyRrH3FY' },
-  { song:'但',           band:'草東沒有派對', yt:'P0a7PL-fvSs' },
-  { song:'擱淺的人',     band:'康士坦的變化球', yt:'HJQv0r-nGfE' },
-  { song:'美好的事可不可以發生在我身上', band:'康士坦的變化球', yt:'5EDGbD_JCKA' },
-  { song:'我還年輕我還年輕', band:'老王樂隊', yt:'hG0JHn6BSQU' },
-  { song:'在這個年代，我們不浪漫', band:'溫室雜草 Easy Weeds', yt:'w6qEUz30T5Q' },
-  { song:'大海',         band:'南西肯恩 NeciKen', yt:'SJyTVpIm0jA' },
-  { song:'小紫aka給我錢', band:'芒果醬 Mango Jump', yt:'9f9W_B2Ts48' },
-  { song:'爛情歌',       band:'hue', yt:'Xu5b7pQ5Geg' },
+  { song:'愛情的大壞蛋', band:'美秀集團',           yt:'BnMuQvQyxdY', start:15 },
+  { song:'戀人',         band:'美秀集團',           yt:'QxXYCJV2Lf0', start:20 },
+  { song:'我要你愛',     band:'美秀集團',           yt:'3fEJpqGdoMw', start:10 },
+  { song:'電火王',       band:'美秀集團',           yt:'0WDQZ7Y3Rew', start:18 },
+  { song:'捲菸',         band:'美秀集團',           yt:'S4JLJVVjevI', start:12 },
+  { song:'不在乎',       band:'icyball 冰球樂團',   yt:'aIhsZ4PdGT4', start:10 },
+  { song:'能不能和我留在台北', band:'icyball 冰球樂團', yt:'Ef3kY8TqRAo', start:10 },
+  { song:'醉後喜歡我',   band:'icyball 冰球樂團',   yt:'P_ZKqTYZnbA', start:15 },
+  { song:'搖啊搖',       band:'icyball 冰球樂團',   yt:'7vXa3f0lmFI', start:10 },
+  { song:'你到底在選擇什麼', band:'公館青少年 GGteens', yt:'gZGf2dPqjq4', start:12 },
+  { song:'要不要跟我出去走一走', band:'公館青少年 GGteens', yt:'WFo5E3fJbLk', start:10 },
+  { song:'逐漸抽離你的慣性', band:'公館青少年 GGteens', yt:'WA7FHBHaBMI', start:15 },
+  { song:'我想和你一起', band:'溫蒂漫步 Wendy Wander', yt:'2I3V-kBBh5U', start:20 },
+  { song:'留下來陪我',   band:'粗大Band',           yt:'u7G3RPEK0W8', start:15 },
+  { song:'大薯',         band:'粗大Band',           yt:'GyCFwOqjpBc', start:10 },
+  { song:'菸癮',         band:'Who Cares 胡凱兒',   yt:'VrQjV0UzPTI', start:25 },
+  { song:'花季',         band:'Who Cares 胡凱兒',   yt:'zDxVzGl9rms', start:10 },
+  { song:'離開的一路上', band:'理想混蛋 Bestards',   yt:'DpBLw17q1WY', start:20 },
+  { song:'相愛就是說了100次對不起', band:'Crispy脆樂團', yt:'PfcKDO2HB5w', start:15 },
+  { song:'揹上悲傷北上', band:'Crispy脆樂團',       yt:'y9lbSmPOSF8', start:10 },
+  { song:'黑暗的盡頭',   band:'Crispy脆樂團',       yt:'1nS_LLQIG2k', start:10 },
+  { song:'魚',           band:'怕胖團 PAPUN BAND',  yt:'EGjSQNKbbA0', start:10 },
+  { song:'嗜愛動物',     band:'麋先生 MIXER',       yt:'TjsNKsTr_IY', start:20 },
+  { song:'長途夜車',     band:'滅火器 Fire EX.',    yt:'V8s81RKEWLE', start:10 },
+  { song:'島嶼天光',     band:'滅火器 Fire EX.',    yt:'Fvh28b-Cdi4', start:10 },
+  { song:'人生尾路',     band:'滅火器 Fire EX.',    yt:'hJPmrKMO2Hs', start:20 },
+  { song:'床',           band:'草東沒有派對',       yt:'sLrDyRrH3FY', start:15 },
+  { song:'但',           band:'草東沒有派對',       yt:'P0a7PL-fvSs', start:10 },
+  { song:'擱淺的人',     band:'康士坦的變化球',     yt:'HJQv0r-nGfE', start:15 },
+  { song:'美好的事可不可以發生在我身上', band:'康士坦的變化球', yt:'5EDGbD_JCKA', start:20 },
+  { song:'我還年輕我還年輕', band:'老王樂隊',       yt:'hG0JHn6BSQU', start:15 },
+  { song:'在這個年代，我們不浪漫', band:'溫室雜草 Easy Weeds', yt:'w6qEUz30T5Q', start:15 },
+  { song:'大海',         band:'南西肯恩 NeciKen',   yt:'SJyTVpIm0jA', start:20 },
+  { song:'小紫aka給我錢', band:'芒果醬 Mango Jump', yt:'9f9W_B2Ts48', start:10 },
+  { song:'爛情歌',       band:'hue',               yt:'Xu5b7pQ5Geg', start:15 },
 ];
 
 const TOTAL_Q = 10;
 const POINTS_PER_Q = 10;
 const KEYS = ['A','B','C','D'];
 
-let questions = [];
-let current = 0;
-let score = 0;
-let answered = false;
-let results = []; // track per-question outcome
+let questions = [], current = 0, score = 0, answered = false, results = [];
+let videoLoaded = false; // tracks if user has clicked play for this question
 
 function shuffle(arr) {
   const a = [...arr];
@@ -315,8 +330,7 @@ function buildQuestions() {
   const pool = shuffle(SONGS);
   questions = pool.slice(0, TOTAL_Q).map(answer => {
     const wrong = shuffle(SONGS.filter(s => s !== answer)).slice(0, 3);
-    const opts = shuffle([answer, ...wrong]);
-    return { answer, opts };
+    return { answer, opts: shuffle([answer, ...wrong]) };
   });
 }
 
@@ -330,36 +344,55 @@ function startGame() {
 }
 
 function restartGame() {
-  loadYT('');
+  stopVideo();
   document.getElementById('gameArea').classList.add('hidden');
   startGame();
 }
 
-function loadYT(videoId) {
+function stopVideo() {
   const frame = document.getElementById('ytFrame');
-  if (!videoId) { frame.src = ''; return; }
-  // autoplay=1, mute=0 so audio plays; start=10 to skip intros
-  frame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&start=10&rel=0&modestbranding=1&iv_load_policy=3`;
+  frame.src = '';
+}
+
+// Called only when user clicks the big play button — satisfies Chrome's autoplay policy
+function userClickPlay() {
+  if (videoLoaded) return;
+  videoLoaded = true;
+
+  const q = questions[current];
+  const frame = document.getElementById('ytFrame');
+  frame.src = `https://www.youtube.com/embed/${q.answer.yt}?autoplay=1&start=${q.answer.start}&rel=0&modestbranding=1&iv_load_policy=3&fs=0`;
+
+  // switch overlay to blur (transparent) so video audio plays but visuals hidden
+  const overlay = document.getElementById('ytOverlay');
+  overlay.classList.add('transparent');
+  document.getElementById('playBtn').style.display = 'none';
+  overlay.querySelector('.overlay-label').textContent = '仔細聆聽，這是哪首歌？';
+  overlay.querySelector('.overlay-sublabel').textContent = '答題後畫面才會揭開';
 }
 
 function renderQuestion() {
   answered = false;
-  const q = questions[current];
+  videoLoaded = false;
 
+  const q = questions[current];
   document.getElementById('qCounter').textContent = `第 ${current+1} / ${TOTAL_Q} 題`;
   document.getElementById('progressFill').style.width = (current / TOTAL_Q * 100) + '%';
   document.getElementById('scoreBadge').textContent = score + ' 分';
   document.getElementById('feedbackBar').className = 'feedback-bar';
   document.getElementById('nextBtn').classList.remove('visible');
 
-  // show blur overlay
-  const overlay = document.getElementById('blurOverlay');
-  overlay.classList.remove('hidden');
+  // Reset overlay to "before play" state
+  stopVideo();
+  const overlay = document.getElementById('ytOverlay');
+  overlay.classList.remove('transparent', 'gone');
+  const playBtn = document.getElementById('playBtn');
+  playBtn.style.display = 'flex';
+  playBtn.textContent = '▶';
+  overlay.querySelector('.overlay-label').textContent = '點擊播放，開始聆聽';
+  overlay.querySelector('.overlay-sublabel').textContent = '影片會模糊，只聽聲音猜歌';
 
-  // load video
-  loadYT(q.answer.yt);
-
-  // render options
+  // Render options
   const grid = document.getElementById('optionsGrid');
   grid.innerHTML = '';
   q.opts.forEach((opt, i) => {
@@ -380,10 +413,10 @@ function answer(idx) {
   if (isCorrect) score += POINTS_PER_Q;
   results.push({ answer: q.answer, correct: isCorrect });
 
-  // reveal video
-  document.getElementById('blurOverlay').classList.add('hidden');
+  // Reveal video
+  document.getElementById('ytOverlay').classList.add('gone');
 
-  // highlight options
+  // Highlight options
   const btns = document.querySelectorAll('.opt-btn');
   const correctIdx = q.opts.indexOf(q.answer);
   btns.forEach((btn, i) => {
@@ -392,14 +425,13 @@ function answer(idx) {
     else if (i === idx && !isCorrect) btn.classList.add('wrong');
   });
 
-  // feedback
+  // Feedback
   const fb = document.getElementById('feedbackBar');
   document.getElementById('feedbackIcon').textContent = isCorrect ? '✓' : '✗';
   document.getElementById('feedbackText').textContent = isCorrect
     ? `答對了！《${q.answer.song}》— ${q.answer.band}`
     : `答錯了。正確答案是《${q.answer.song}》— ${q.answer.band}`;
   fb.className = 'feedback-bar ' + (isCorrect ? 'correct' : 'wrong');
-
   document.getElementById('scoreBadge').textContent = score + ' 分';
 
   const nb = document.getElementById('nextBtn');
@@ -409,29 +441,27 @@ function answer(idx) {
 
 function nextQuestion() {
   current++;
-  if (current >= TOTAL_Q) { showEnd(); }
-  else { renderQuestion(); }
+  if (current >= TOTAL_Q) showEnd();
+  else renderQuestion();
 }
 
 function showEnd() {
-  loadYT('');
+  stopVideo();
   document.getElementById('gameArea').classList.add('hidden');
-  const end = document.getElementById('endScreen');
-  end.classList.remove('hidden');
-
+  document.getElementById('endScreen').classList.remove('hidden');
   document.getElementById('finalScore').textContent = score + ' 分';
 
-  let rank, msg;
-  if (score === 100) { rank = '🏆 完美聽力！'; msg = '你根本就是台灣獨立樂團活字典！'; }
-  else if (score >= 80) { rank = '🎸 樂團通'; msg = '很厲害！你對台灣樂團相當熟悉。'; }
-  else if (score >= 60) { rank = '🎵 入門玩家'; msg = '不錯喔！繼續多聽台灣樂團的歌吧。'; }
-  else if (score >= 40) { rank = '🎧 音樂新手'; msg = '有幾首猜對了！繼續加油，再試一次吧！'; }
-  else { rank = '🌱 初學者'; msg = '台灣有很多好聽的樂團等你探索！'; }
-
+  const ranks = [
+    [100, '🏆 完美聽力！', '你根本就是台灣獨立樂團活字典！'],
+    [80,  '🎸 樂團通',     '很厲害！你對台灣樂團相當熟悉。'],
+    [60,  '🎵 入門玩家',   '不錯喔！繼續多聽台灣樂團的歌吧。'],
+    [40,  '🎧 音樂新手',   '有幾首猜對了！繼續加油，再試一次！'],
+    [0,   '🌱 初學者',     '台灣有很多好聽的樂團等你探索！'],
+  ];
+  const [, rank, msg] = ranks.find(([min]) => score >= min);
   document.getElementById('finalRank').textContent = rank;
   document.getElementById('finalMsg').textContent = msg;
 
-  // Results list
   const list = document.getElementById('resultsList');
   list.innerHTML = '';
   results.forEach((r, i) => {
@@ -439,8 +469,8 @@ function showEnd() {
     div.className = 'result-item';
     div.innerHTML = `
       <span class="result-dot ${r.correct ? 'ok' : 'no'}"></span>
-      <span style="min-width:20px;font-size:12px;color:var(--muted);">Q${i+1}</span>
-      <span class="result-song">
+      <span style="min-width:20px;font-size:12px;color:var(--muted)">Q${i+1}</span>
+      <span style="flex:1">
         <div>${r.answer.song}</div>
         <div class="result-band">${r.answer.band}</div>
       </span>
@@ -453,13 +483,10 @@ function showEnd() {
 
 document.addEventListener('keydown', e => {
   const key = e.key.toUpperCase();
-  if (['A','B','C','D'].includes(key) && !answered &&
-      !document.getElementById('gameArea').classList.contains('hidden')) {
-    answer(KEYS.indexOf(key));
-  }
-  if ((key === 'ENTER' || key === 'N') && answered) {
-    nextQuestion();
-  }
+  const inGame = !document.getElementById('gameArea').classList.contains('hidden');
+  if (!inGame) return;
+  if (['A','B','C','D'].includes(key) && !answered) answer(KEYS.indexOf(key));
+  if ((key === 'ENTER' || key === 'N') && answered) nextQuestion();
 });
 </script>
 </body>
