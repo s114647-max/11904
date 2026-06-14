@@ -3,841 +3,416 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>猜歌遊戲 🎵</title>
+<title>猜歌遊戲｜台灣樂團</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Space+Grotesk:wght@400;600;700&display=swap');
-
-  :root {
-    --bg: #0d0d0f;
-    --surface: #16161a;
-    --surface2: #1e1e24;
-    --border: #2a2a35;
-    --accent-a: #ff6b35;
-    --accent-b: #a855f7;
-    --accent-c: #22d3a5;
-    --text: #f0f0f5;
-    --text-dim: #8888a0;
-    --correct: #22d3a5;
-    --wrong: #ff4d6d;
-    --radius: 14px;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Noto Sans TC', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 24px 16px 60px;
-  }
-
-  /* ── HEADER ── */
-  .logo {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 6px;
-  }
-  h1 {
-    font-size: clamp(32px, 6vw, 52px);
-    font-weight: 900;
-    text-align: center;
-    line-height: 1;
-    background: linear-gradient(135deg, #fff 30%, var(--text-dim));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 32px;
-  }
-
-  /* ── SELECT SCREEN ── */
-  #select-screen { width: 100%; max-width: 480px; }
-  .select-title {
-    text-align: center;
-    font-size: 15px;
-    color: var(--text-dim);
-    margin-bottom: 28px;
-    letter-spacing: 1px;
-  }
-  .playlist-cards {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .playlist-card {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px 24px;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .playlist-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-  .playlist-card.card-a::before { background: linear-gradient(135deg, var(--accent-a)15, transparent); }
-  .playlist-card.card-b::before { background: linear-gradient(135deg, var(--accent-b)15, transparent); }
-  .playlist-card.card-c::before { background: linear-gradient(135deg, var(--accent-c)15, transparent); }
-  .playlist-card:hover { transform: translateY(-2px); border-color: #444; }
-  .playlist-card:hover::before { opacity: 1; }
-  .card-letter {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 36px;
-    font-weight: 700;
-    width: 52px;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    flex-shrink: 0;
-  }
-  .card-a .card-letter { background: var(--accent-a)22; color: var(--accent-a); }
-  .card-b .card-letter { background: var(--accent-b)22; color: var(--accent-b); }
-  .card-c .card-letter { background: var(--accent-c)22; color: var(--accent-c); }
-  .card-info { flex: 1; }
-  .card-name { font-size: 20px; font-weight: 700; margin-bottom: 3px; }
-  .card-sub { font-size: 13px; color: var(--text-dim); }
-  .card-arrow { color: var(--text-dim); font-size: 20px; }
-
-  /* ── GAME SCREEN ── */
-  #game-screen { width: 100%; max-width: 560px; display: none; }
-
-  .top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  .playlist-badge {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    text-transform: uppercase;
-  }
-  .badge-a { background: var(--accent-a)22; color: var(--accent-a); }
-  .badge-b { background: var(--accent-b)22; color: var(--accent-b); }
-  .badge-c { background: var(--accent-c)22; color: var(--accent-c); }
-
-  .score-display {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-  }
-  .score-num { font-size: 26px; }
-
-  .progress-bar {
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    margin-bottom: 24px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.5s ease;
-  }
-  .fill-a { background: var(--accent-a); }
-  .fill-b { background: var(--accent-b); }
-  .fill-c { background: var(--accent-c); }
-
-  .question-label {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 10px;
-    text-align: center;
-  }
-
-  /* ── PLAYER ── */
-  .player-box {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px 24px 20px;
-    margin-bottom: 20px;
-    text-align: center;
-    position: relative;
-  }
-  .vinyl {
-    width: 100px;
-    height: 100px;
-    background: radial-gradient(circle at 50%, #111 20%, #222 40%, #1a1a1a 60%, #222 80%);
-    border-radius: 50%;
-    margin: 0 auto 16px;
-    position: relative;
-    border: 3px solid #333;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .vinyl::after {
-    content: '';
-    width: 18px;
-    height: 18px;
-    background: var(--bg);
-    border-radius: 50%;
-    border: 3px solid #444;
-  }
-  .vinyl.spinning { animation: spin 2s linear infinite; }
-  .vinyl.paused { animation-play-state: paused; }
-
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-  .player-status {
-    font-size: 13px;
-    color: var(--text-dim);
-    margin-bottom: 10px;
-    letter-spacing: 1px;
-  }
-
-  .player-controls { display: flex; justify-content: center; gap: 12px; }
-  .ctrl-btn {
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 50%;
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 16px;
-    color: var(--text);
-    transition: all 0.15s;
-  }
-  .ctrl-btn:hover { background: var(--border); transform: scale(1.08); }
-  .ctrl-btn.primary {
-    width: 54px;
-    height: 54px;
-    font-size: 20px;
-  }
-  .ctrl-btn.primary.btn-a { background: var(--accent-a)22; border-color: var(--accent-a)55; color: var(--accent-a); }
-  .ctrl-btn.primary.btn-b { background: var(--accent-b)22; border-color: var(--accent-b)55; color: var(--accent-b); }
-  .ctrl-btn.primary.btn-c { background: var(--accent-c)22; border-color: var(--accent-c)55; color: var(--accent-c); }
-
-  /* hidden youtube container */
-  #yt-container { position: fixed; top: -9999px; left: -9999px; width: 1px; height: 1px; }
-
-  /* ── OPTIONS ── */
-  .options-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  .option-btn {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px 14px;
-    cursor: pointer;
-    text-align: left;
-    transition: all 0.15s;
-    color: var(--text);
-    font-family: inherit;
-  }
-  .option-btn:hover:not(:disabled) { border-color: #555; background: var(--surface2); transform: translateY(-1px); }
-  .option-btn:disabled { cursor: default; }
-  .option-key {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: var(--text-dim);
-    margin-bottom: 5px;
-  }
-  .option-text {
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1.3;
-  }
-  .option-sub {
-    font-size: 11px;
-    color: var(--text-dim);
-    margin-top: 2px;
-  }
-  .option-btn.correct { background: var(--correct)18; border-color: var(--correct); }
-  .option-btn.wrong { background: var(--wrong)18; border-color: var(--wrong); }
-  .option-btn.correct .option-key, .option-btn.wrong .option-key { color: inherit; }
-
-  .hint-row {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-  .hint-chip {
-    font-size: 11px;
-    color: var(--text-dim);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 4px 12px;
-  }
-
-  /* ── RESULT MESSAGE ── */
-  .result-msg {
-    text-align: center;
-    padding: 12px;
-    border-radius: 10px;
-    font-weight: 700;
-    font-size: 15px;
-    margin-bottom: 14px;
-    display: none;
-  }
-  .result-msg.correct { background: var(--correct)18; color: var(--correct); display: block; }
-  .result-msg.wrong { background: var(--wrong)18; color: var(--wrong); display: block; }
-
-  .next-btn {
-    width: 100%;
-    padding: 16px;
-    border-radius: var(--radius);
-    border: none;
-    font-family: inherit;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    display: none;
-    transition: transform 0.15s, opacity 0.15s;
-    letter-spacing: 1px;
-  }
-  .next-btn:hover { transform: translateY(-2px); opacity: 0.92; }
-  .next-btn.btn-a { background: var(--accent-a); color: #fff; }
-  .next-btn.btn-b { background: var(--accent-b); color: #fff; }
-  .next-btn.btn-c { background: var(--accent-c); color: #111; }
-
-  /* ── FINAL SCREEN ── */
-  #final-screen { width: 100%; max-width: 480px; display: none; text-align: center; }
-  .final-emoji { font-size: 72px; margin-bottom: 16px; }
-  .final-title { font-size: 28px; font-weight: 900; margin-bottom: 8px; }
-  .final-score {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 72px;
-    font-weight: 700;
-    line-height: 1;
-    margin-bottom: 6px;
-  }
-  .final-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 32px; }
-  .breakdown {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 24px;
-    text-align: left;
-  }
-  .breakdown-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 14px;
-  }
-  .breakdown-row:last-child { border-bottom: none; }
-  .breakdown-icon { margin-right: 8px; }
-  .restart-btn {
-    width: 100%;
-    padding: 16px;
-    border-radius: var(--radius);
-    border: none;
-    font-family: inherit;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    background: var(--text);
-    color: var(--bg);
-    transition: opacity 0.15s;
-    letter-spacing: 1px;
-  }
-  .restart-btn:hover { opacity: 0.85; }
-
-  /* keyboard hint */
-  .kbd-hint {
-    text-align: center;
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-top: 10px;
-  }
-  kbd {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 1px 5px;
-    font-family: monospace;
-    font-size: 11px;
-  }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0d0d0d;
+  --surface: #1a1a1a;
+  --surface2: #242424;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.18);
+  --text: #f0ece4;
+  --muted: #888;
+  --accent: #e8c84a;
+  --correct: #4caf7d;
+  --correct-dim: rgba(76,175,125,0.15);
+  --wrong: #e05c5c;
+  --wrong-dim: rgba(224,92,92,0.15);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 1rem 4rem;
+}
+.site-header {
+  width: 100%; max-width: 680px;
+  padding: 2rem 0 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+  border-bottom: 0.5px solid var(--border);
+  margin-bottom: 2rem;
+}
+.logo-icon {
+  width: 44px; height: 44px;
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0; color: #111;
+}
+.site-header h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.03em; }
+.site-header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.scorebar {
+  width: 100%; max-width: 680px;
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.q-counter { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.progress-track { flex:1; height:4px; background:var(--surface2); border-radius:99px; overflow:hidden; }
+.progress-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .4s ease; }
+.score-badge { font-size:13px; font-weight:600; color:var(--accent); white-space:nowrap; }
+.card {
+  width: 100%; max-width: 680px;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+.spotify-wrap {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: #000;
+  margin-bottom: 1.25rem;
+  position: relative;
+  min-height: 80px;
+}
+.spotify-wrap iframe {
+  display: block;
+  width: 100%;
+  border: none;
+}
+.spotify-placeholder {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 80px;
+  color: var(--muted); font-size: 14px;
+}
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.opt-btn {
+  background: var(--surface2);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 14px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.4;
+  transition: background .12s, border-color .12s, transform .1s;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.opt-btn:hover:not(:disabled) { background: #2e2e2e; border-color: var(--border2); }
+.opt-btn:active:not(:disabled) { transform: scale(0.98); }
+.opt-key {
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  width: 22px; height: 22px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: var(--muted);
+}
+.opt-song { font-weight: 500; }
+.opt-band { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.opt-btn.correct { background: var(--correct-dim); border-color: var(--correct); }
+.opt-btn.correct .opt-key { background: var(--correct); color: #111; }
+.opt-btn.wrong { background: var(--wrong-dim); border-color: var(--wrong); }
+.opt-btn.wrong .opt-key { background: var(--wrong); color: #fff; }
+.opt-btn:disabled { cursor: not-allowed; }
+.feedback-bar {
+  width: 100%; max-width: 680px;
+  border-radius: var(--radius-sm);
+  padding: 13px 18px;
+  font-size: 14px;
+  display: none; align-items: center; gap: 10px;
+  margin-bottom: 1rem;
+}
+.feedback-bar.correct { display:flex; background:var(--correct-dim); border:0.5px solid var(--correct); color:var(--correct); }
+.feedback-bar.wrong { display:flex; background:var(--wrong-dim); border:0.5px solid var(--wrong); color:var(--wrong); }
+.feedback-bar span { color: var(--text); font-size:13px; }
+.next-btn {
+  background: var(--accent); color: #111;
+  border: none; border-radius: var(--radius-sm);
+  padding: 13px 32px; font-size: 15px; font-weight: 600;
+  cursor: pointer; display: none; margin: 0 auto;
+  transition: transform .12s;
+}
+.next-btn:hover { transform: scale(1.03); }
+.next-btn:active { transform: scale(0.97); }
+.next-btn.visible { display: block; }
+.screen {
+  width: 100%; max-width: 680px;
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3rem 2rem; text-align: center;
+}
+.screen h2 { font-size: 24px; font-weight: 600; margin-bottom: .5rem; }
+.screen p { color: var(--muted); font-size: 15px; line-height: 1.7; margin-bottom: 1.5rem; }
+.screen .big-score { font-size: 72px; font-weight: 700; color: var(--accent); line-height: 1; margin: 1.5rem 0; }
+.screen .rank { font-size: 18px; color: var(--muted); margin-bottom: 1.5rem; }
+.start-btn, .restart-btn {
+  background: var(--accent); color: #111;
+  border: none; border-radius: var(--radius-sm);
+  padding: 14px 40px; font-size: 16px; font-weight: 600;
+  cursor: pointer; transition: transform .12s;
+}
+.start-btn:hover, .restart-btn:hover { transform: scale(1.03); }
+.keyboard-hint { font-size: 12px; color: var(--muted); text-align: center; margin-top: .75rem; }
+.hidden { display: none !important; }
+.notice-box {
+  width: 100%; max-width: 680px;
+  background: rgba(232,200,74,0.08);
+  border: 0.5px solid rgba(232,200,74,0.3);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 13px; color: #c8a830;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
 </style>
 </head>
 <body>
 
-<!-- YouTube hidden player -->
-<div id="yt-container"><div id="yt-player"></div></div>
-
-<!-- ── SELECT SCREEN ── -->
-<div id="select-screen">
-  <p class="logo">🎵 MUSIC QUIZ</p>
-  <h1>猜歌遊戲</h1>
-  <p class="select-title">選擇你的歌單類型</p>
-  <div class="playlist-cards">
-    <div class="playlist-card card-a" onclick="startGame('A')">
-      <div class="card-letter">A</div>
-      <div class="card-info">
-        <div class="card-name">樂團歌曲</div>
-        <div class="card-sub">台灣獨立樂團・搖滾・另類</div>
-      </div>
-      <div class="card-arrow">›</div>
-    </div>
-    <div class="playlist-card card-b" onclick="startGame('B')">
-      <div class="card-letter">B</div>
-      <div class="card-info">
-        <div class="card-name">KPOP 歌曲</div>
-        <div class="card-sub">韓國流行音樂・偶像團體</div>
-      </div>
-      <div class="card-arrow">›</div>
-    </div>
-    <div class="playlist-card card-c" onclick="startGame('C')">
-      <div class="card-letter">C</div>
-      <div class="card-info">
-        <div class="card-name">台灣流行樂</div>
-        <div class="card-sub">華語流行・台灣主流歌手</div>
-      </div>
-      <div class="card-arrow">›</div>
-    </div>
+<header class="site-header">
+  <div class="logo-icon">🎵</div>
+  <div>
+    <h1>台灣樂團猜歌</h1>
+    <p>Band Song Quiz · 十題 · 總分 100 分</p>
   </div>
+</header>
+
+<!-- START SCREEN -->
+<div class="screen" id="startScreen">
+  <h2>準備好了嗎？</h2>
+  <p>透過 Spotify 播放器試聽歌曲，猜出正確的歌名。<br>
+  共十題，每題 10 分，滿分 100 分。<br>
+  鍵盤 A / B / C / D 選答，Space 可控制播放。</p>
+  <button class="start-btn" onclick="startGame()">開始遊戲</button>
 </div>
 
-<!-- ── GAME SCREEN ── -->
-<div id="game-screen">
-  <div class="top-bar">
-    <span class="playlist-badge" id="game-badge">A</span>
-    <div class="score-display">分數 <span class="score-num" id="score-num">0</span></div>
+<!-- GAME AREA -->
+<div id="gameArea" class="hidden" style="width:100%;max-width:680px;">
+
+  <div class="scorebar">
+    <span class="q-counter" id="qCounter">第 1 / 10 題</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <span class="score-badge" id="scoreBadge">0 分</span>
   </div>
-  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
 
-  <p class="question-label">第 <span id="q-num">1</span> 題，共 10 題</p>
+  <div class="notice-box" id="noticeBox">
+    💡 需要登入 Spotify 才能完整播放；未登入可聽 <strong>30 秒預覽片段</strong>。播放器載入後請稍候，可能需要幾秒鐘。
+  </div>
 
-  <div class="player-box">
-    <div class="vinyl" id="vinyl-disc">🎵</div>
-    <p class="player-status" id="player-status">載入中…</p>
-    <div class="player-controls">
-      <button class="ctrl-btn" onclick="rewind()" title="重播片段">↺</button>
-      <button class="ctrl-btn primary" id="play-btn" onclick="togglePlay()">▶</button>
-      <button class="ctrl-btn" onclick="skipAhead()" title="快進 5 秒">→</button>
+  <div class="card">
+    <!-- Spotify embed -->
+    <div class="spotify-wrap" id="spotifyWrap">
+      <div class="spotify-placeholder" id="spotifyPlaceholder">載入中…</div>
+      <iframe id="spotifyFrame" style="display:none;" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
     </div>
+
+    <!-- Options -->
+    <div class="options-grid" id="optionsGrid"></div>
   </div>
 
-  <div class="hint-row" id="hint-row">
-    <span class="hint-chip" id="hint-duration">⏱ 0:00</span>
-    <span class="hint-chip" id="hint-artist" style="display:none">🎤 ?</span>
+  <div class="feedback-bar" id="feedbackBar">
+    <strong id="feedbackIcon">✓</strong>
+    <span id="feedbackText"></span>
   </div>
 
-  <div class="options-grid" id="options-grid"></div>
-  <div class="result-msg" id="result-msg"></div>
-  <button class="next-btn" id="next-btn" onclick="nextQuestion()">下一題 →</button>
-  <p class="kbd-hint">鍵盤快捷鍵：<kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> 選答案 ｜ <kbd>Space</kbd> 播放/暫停</p>
+  <div style="text-align:center;">
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">下一題 →</button>
+  </div>
+  <p class="keyboard-hint">鍵盤快捷鍵：A B C D 選答 · Enter / N 下一題</p>
 </div>
 
-<!-- ── FINAL SCREEN ── -->
-<div id="final-screen">
-  <div class="final-emoji" id="final-emoji">🏆</div>
-  <div class="final-title">遊戲結束！</div>
-  <div class="final-score" id="final-score">0</div>
-  <div class="final-sub">分 / 100 分</div>
-  <div class="breakdown" id="breakdown"></div>
-  <button class="restart-btn" onclick="goBack()">⟳ 重新開始</button>
+<!-- END SCREEN -->
+<div class="screen hidden" id="endScreen">
+  <h2>遊戲結束！</h2>
+  <div class="big-score" id="finalScore">0</div>
+  <div class="rank" id="finalRank"></div>
+  <p id="finalMsg"></p>
+  <button class="restart-btn" onclick="restartGame()">再玩一次</button>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════
-//  PLAYLISTS  (YouTube video ID + metadata)
-// ═══════════════════════════════════════════════
-const PLAYLISTS = {
-  A: { // 樂團歌曲 - Taiwanese indie bands
-    name: '樂團歌曲', accent: 'a',
-    songs: [
-      { id: 'D4V8KgFqMEw', title: '愛情的大壞蛋', artist: '美秀集團', start: 25 },
-      { id: 'aqxuLpjlNeU', title: '戀人', artist: '美秀集團', start: 20 },
-      { id: 'yLFZZzFAJzM', title: '捲菸', artist: '美秀集團', start: 10 },
-      { id: 'u4CStCIoYv0', title: '不在乎', artist: 'icyball 冰球樂團', start: 15 },
-      { id: 'hBp7xhJLXMQ', title: '能不能和我留在台北', artist: 'icyball 冰球樂團', start: 20 },
-      { id: 'RClEOHjHYhA', title: '醉後喜歡我', artist: 'icyball 冰球樂團', start: 18 },
-      { id: 'lmjhYpWaOrE', title: '搖啊搖', artist: 'icyball 冰球樂團', start: 15 },
-      { id: 'Y1BLv4PQLMU', title: '你要不要跟我出去走一走', artist: '公館青少年 GGteens', start: 20 },
-      { id: 'hLgWL2OYJLU', title: '你到底在選擇什麼', artist: '公館青少年 GGteens', start: 15 },
-      { id: 'KsTHXGl85GQ', title: '逐漸抽離你的慣性', artist: '公館青少年 GGteens', start: 20 },
-      { id: '7qoXpZAiuH4', title: '我想和你一起', artist: '溫蒂漫步 Wendy Wander', start: 30 },
-      { id: 'PZJhSGS_Y_I', title: '留下來陪我', artist: '粗大Band', start: 20 },
-      { id: 'cNZbFdD2Czk', title: '菸癮', artist: 'Who Cares 胡凱兒', start: 15 },
-      { id: 'XNniSQ7hHlY', title: '花季', artist: 'Who Cares 胡凱兒', start: 20 },
-      { id: '5o_BxhvCTbM', title: '離開的一路上', artist: '理想混蛋 Bestards', start: 20 },
-      { id: 'R4kWyAZCw8k', title: '相愛就是說了100次對不起', artist: 'Crispy 脆樂團', start: 25 },
-      { id: 'UajS0jJ6AyQ', title: '魚', artist: '怕胖團 PAPUN BAND', start: 20 },
-      { id: 'yQxzz5RFKKY', title: '嗜愛動物', artist: '麋先生 MIXER', start: 18 },
-      { id: 'PXqlWBSHImw', title: '長途夜車', artist: '滅火器 Fire EX.', start: 15 },
-      { id: 'GAhPOhXEZp4', title: '十二月的妳', artist: '滅火器 Fire EX.', start: 20 },
-      { id: 'p-_BHfSf11U', title: '島嶼天光', artist: '滅火器 Fire EX.', start: 15 },
-      { id: 'VbMDFdBvwGE', title: '一九四五', artist: '滅火器 Fire EX.', start: 20 },
-      { id: 'BxHHYVhXGWA', title: '床', artist: '草東沒有派對', start: 20 },
-      { id: 'u0-XWqYDSXU', title: '擱淺的人', artist: '康士坦的變化球 KST', start: 30 },
-      { id: 'Rz6G-UPrfNA', title: '美好的事可不可以發生在我身上', artist: '康士坦的變化球 KST', start: 25 },
-      { id: 'vJwPLrJeC5c', title: '我還年輕 我還年輕', artist: '老王樂隊', start: 25 },
-      { id: 'x0MhCv1ZQWE', title: '在這個年代，我們不浪漫', artist: '溫室雜草 Easy Weeds', start: 20 },
-      { id: 'XCXIrMV6X4A', title: '大海', artist: '南西肯恩 NeciKen', start: 25 },
-      { id: 'wGHBu-T6WuU', title: '揹上悲傷北上', artist: 'Crispy 脆樂團', start: 20 },
-      { id: 'jCKqbTZ-7mo', title: '小紫aka給我錢', artist: '芒果醬 Mango Jump', start: 15 },
-    ]
-  },
-  B: { // KPOP
-    name: 'KPOP 歌曲', accent: 'b',
-    songs: [
-      { id: 'gdZLi9oWNZg', title: 'Dynamite', artist: 'BTS', start: 10 },
-      { id: 'MBdVXkSdhwU', title: 'PINK VENOM', artist: 'BLACKPINK', start: 15 },
-      { id: 'tMqA3KO3VcM', title: 'How You Like That', artist: 'BLACKPINK', start: 10 },
-      { id: 'ioNng23DkIM', title: 'Boy With Luv', artist: 'BTS ft. Halsey', start: 20 },
-      { id: 'pSudEWBAYRE', title: 'LOVE DIVE', artist: 'IVE', start: 15 },
-      { id: 'eOaHSAMxxPs', title: 'After LIKE', artist: 'IVE', start: 10 },
-      { id: 'G4vn2ESl_P0', title: 'Nxde', artist: '(G)I-DLE', start: 15 },
-      { id: 'HV7T5b38MOE', title: 'ANTIFRAGILE', artist: 'LE SSERAFIM', start: 10 },
-      { id: 'RPnxdEL2VtY', title: 'Butter', artist: 'BTS', start: 10 },
-      { id: 'WITiX-yLMqw', title: 'Lovesick Girls', artist: 'BLACKPINK', start: 15 },
-      { id: '7C2z4GqqS5E', title: 'DALLA DALLA', artist: 'ITZY', start: 10 },
-      { id: 'KtOc2785YoA', title: 'Not Shy', artist: 'ITZY', start: 15 },
-      { id: 'f5uDDMZpPZc', title: 'Next Level', artist: 'aespa', start: 12 },
-      { id: 'qFPMwLJ6Zzs', title: 'Supernova', artist: 'aespa', start: 10 },
-      { id: 'yb4Z1TmCqc4', title: 'Kill This Love', artist: 'BLACKPINK', start: 10 },
-      { id: 'mGVDGBSdONs', title: 'Permission to Dance', artist: 'BTS', start: 15 },
-      { id: 'bPnIKzHo2Y8', title: 'Rollin\'', artist: 'Brave Girls', start: 12 },
-      { id: 'veLO4uIqBs4', title: 'Money', artist: 'LISA', start: 10 },
-      { id: 'cmx2KfBnBGg', title: 'Cheer Up', artist: 'TWICE', start: 20 },
-      { id: 'CLeZyIID9Bo', title: 'TT', artist: 'TWICE', start: 15 },
-      { id: 'kOHB85mDOgU', title: 'Fancy', artist: 'TWICE', start: 12 },
-      { id: 'yUefmECWzOo', title: 'What is Love?', artist: 'TWICE', start: 18 },
-      { id: 'V1i9eXoVUL4', title: 'I AM', artist: 'IVE', start: 12 },
-      { id: 'MBdVXkSdhwU', title: 'Shut Down', artist: 'BLACKPINK', start: 10 },
-      { id: 'IHNstlMJyNg', title: 'TOMBOY', artist: '(G)I-DLE', start: 12 },
-    ]
-  },
-  C: { // 台灣流行樂
-    name: '台灣流行樂', accent: 'c',
-    songs: [
-      { id: 'gLGJNXpllGE', title: '說好的幸福呢', artist: '周杰倫', start: 20 },
-      { id: 'hRkR1VqEPTs', title: '告白氣球', artist: '周杰倫', start: 15 },
-      { id: 'T4QvBFPLDBc', title: '不愛我就拉倒', artist: '周杰倫', start: 12 },
-      { id: 'ooCjBe0PqfI', title: '愛情廢柴', artist: '五月天', start: 20 },
-      { id: 'FuKi03X61so', title: '倔強', artist: '五月天', start: 25 },
-      { id: 'JqR0p8_Y6Fw', title: '笑忘歌', artist: '五月天', start: 20 },
-      { id: 'hP_lFXqO3yA', title: '最重要的小事', artist: '五月天', start: 15 },
-      { id: 'Mq-kCi-KHGY', title: '那些年', artist: '胡夏', start: 20 },
-      { id: 'Yr5MiEIqJc8', title: '愛我還是他', artist: 'A-Lin', start: 15 },
-      { id: 'V9_7eeSdGH4', title: '好膽你就來', artist: '陳雷', start: 10 },
-      { id: 'JalgnPE0yNk', title: '不將就', artist: '李榮浩', start: 20 },
-      { id: '9SKE_t6C9H8', title: '年少有為', artist: '李榮浩', start: 15 },
-      { id: 'YkzXEPUBLyA', title: '演員', artist: '薛之謙', start: 20 },
-      { id: 'kGSknOHNF74', title: '醜八怪', artist: '薛之謙', start: 15 },
-      { id: 'R8m5YEFQB1U', title: '小幸運', artist: '田馥甄 Hebe', start: 20 },
-      { id: 'HJ91Q68E1RE', title: '你就不要想起我', artist: '田馥甄 Hebe', start: 18 },
-      { id: 'fYQAIzMbaqQ', title: 'All of Me', artist: '鄧紫棋 G.E.M.', start: 15 },
-      { id: 'WT8pvB7CGVE', title: '句號', artist: '鄧紫棋 G.E.M.', start: 12 },
-      { id: 'l5-3NHAK_Oo', title: '說散就散', artist: '周興哲', start: 18 },
-      { id: 'EfKjl9eGQFw', title: '以後別做朋友', artist: '周興哲', start: 20 },
-      { id: 'rlSmEzIHHrk', title: '心如刀割', artist: '張學友', start: 20 },
-      { id: 'J8Q78eWOmBs', title: '玫瑰香', artist: '楊丞琳', start: 15 },
-      { id: 'zQUuS2aV7aU', title: 'Play', artist: '楊丞琳', start: 12 },
-      { id: '4n0qnlwPv_Y', title: '差點', artist: '林俊傑 JJ Lin', start: 20 },
-      { id: 'c6v7jJBYLWs', title: '修煉愛情', artist: '林俊傑 JJ Lin', start: 18 },
-    ]
-  }
-};
+const SONGS = [
+  { song:'捲菸', band:'美秀集團', id:'7ks6KrwN2DKhEm06X85qEK' },
+  { song:'愛情的大壞蛋', band:'美秀集團', id:'0OmFkWvBbUxXjGMjWoHBnj' },
+  { song:'戀人', band:'美秀集團', id:'3BaANp3Pk4gEA4vPJDdRkF' },
+  { song:'我要你愛', band:'美秀集團', id:'3uNJHOe5kNb0HJ7tpRzEZo' },
+  { song:'電火王', band:'美秀集團', id:'6Wm3oOYZhCEqt1v0qXUNeY' },
+  { song:'長途夜車', band:'滅火器 Fire EX.', id:'2DZLyqxPBCziw1YJOWPCjQ' },
+  { song:'島嶼天光', band:'滅火器 Fire EX.', id:'4uZrEi9OP8VW1LbBRl61fd' },
+  { song:'人生尾路', band:'滅火器 Fire EX.', id:'7bv7M3dxcbrnDOhV11otMb' },
+  { song:'床', band:'草東沒有派對', id:'7iNnvOWQSTQPLn5WPu0gdU' },
+  { song:'但', band:'草東沒有派對', id:'54hpc7UxPBdpcsC7xFKEWB' },
+  { song:'我還年輕我還年輕', band:'老王樂隊', id:'5o48kuQnPwhuRAzO2t0bCU' },
+  { song:'能不能和我留在台北', band:'icyball 冰球樂團', id:'4u2nqzrQ3p1EGCFhOw0YR1' },
+  { song:'醉後喜歡我', band:'icyball 冰球樂團', id:'1gWS5LE8aPHfJzD5bPFnIj' },
+  { song:'搖啊搖', band:'icyball 冰球樂團', id:'4DV0JEJfCgSBsK5TSdCCzL' },
+  { song:'我想和你一起', band:'溫蒂漫步 Wendy Wander', id:'5WQHwGYKN3V6QFG9QC5Bvp' },
+  { song:'離開的一路上', band:'理想混蛋 Bestards', id:'1J0DkyMzpOYv1D6Hm1oEpv' },
+  { song:'相愛就是說了100次對不起', band:'Crispy脆樂團', id:'6NhLFpRzGxvDNM2uxjRqSD' },
+  { song:'揹上悲傷北上', band:'Crispy脆樂團', id:'4vI8Vr5FfGmqhm9klbJKPQ' },
+  { song:'黑暗的盡頭', band:'Crispy脆樂團', id:'2Fh1VTD9vhJAL0Tm3iVBCq' },
+  { song:'嗜愛動物', band:'麋先生 MIXER', id:'1Bg7bFqe8TfXVnGJbN3BpT' },
+  { song:'菸癮', band:'Who Cares 胡凱兒', id:'5I5M9DQvMhiJMHGDJZBmxZ' },
+  { song:'花季', band:'Who Cares 胡凱兒', id:'3v3K4aaGpGu2pPAlcSF3vA' },
+  { song:'擱淺的人', band:'康士坦的變化球', id:'0SKW7Q3G0MkqAXLxRMdIFY' },
+  { song:'美好的事可不可以發生在我身上', band:'康士坦的變化球', id:'5BhyM4mYP6wJf35W9r4HQm' },
+  { song:'留下來陪我', band:'粗大Band', id:'0JsEDDCbA9IqUGdD0EKTAZ' },
+  { song:'魚', band:'怕胖團 PAPUN BAND', id:'1DwFZkrNwFNR2f31j8sLY2' },
+  { song:'大海', band:'南西肯恩 NeciKen', id:'2mNPfJ2bLTnzJFWD9ePcmH' },
+  { song:'在這個年代，我們不浪漫', band:'溫室雜草 Easy Weeds', id:'5HgbCOJm6k6ypMqH2J2YDw' },
+];
 
-// ═══════════════════════════════════════════════
-//  GAME STATE
-// ═══════════════════════════════════════════════
-let currentPlaylist = null;
+const TOTAL_Q = 10;
+const POINTS_PER_Q = 10;
+const KEYS = ['A','B','C','D'];
+
 let questions = [];
-let currentQ = 0;
+let current = 0;
 let score = 0;
 let answered = false;
-let history = [];
-let ytPlayer = null;
-let ytReady = false;
-let isPlaying = false;
-let currentSong = null;
 
-// ═══════════════════════════════════════════════
-//  YOUTUBE API
-// ═══════════════════════════════════════════════
-window.onYouTubeIframeAPIReady = function () {
-  ytPlayer = new YT.Player('yt-player', {
-    height: '1',
-    width: '1',
-    playerVars: { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1 },
-    events: {
-      onReady: () => { ytReady = true; if (pendingLoad) loadSong(pendingLoad.id, pendingLoad.start); },
-      onStateChange: (e) => {
-        const vinyl = document.getElementById('vinyl-disc');
-        if (e.data === YT.PlayerState.PLAYING) {
-          vinyl.className = 'vinyl spinning';
-          document.getElementById('play-btn').textContent = '⏸';
-          isPlaying = true;
-          startTimer();
-        } else {
-          vinyl.className = 'vinyl';
-          document.getElementById('play-btn').textContent = '▶';
-          isPlaying = false;
-        }
-      }
-    }
-  });
-};
-
-let pendingLoad = null;
-function loadSong(videoId, startSec) {
-  if (!ytReady) { pendingLoad = { id: videoId, start: startSec }; return; }
-  pendingLoad = null;
-  ytPlayer.loadVideoById({ videoId, startSeconds: startSec });
-  ytPlayer.playVideo();
-  document.getElementById('player-status').textContent = '🎵 正在播放…';
-}
-
-let timerInterval = null;
-function startTimer() {
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    if (!ytPlayer || !isPlaying) return;
-    const t = ytPlayer.getCurrentTime() || 0;
-    const start = currentSong ? currentSong.start : 0;
-    const elapsed = Math.max(0, t - start);
-    const m = Math.floor(elapsed / 60), s = Math.floor(elapsed % 60);
-    document.getElementById('hint-duration').textContent = `⏱ ${m}:${s.toString().padStart(2,'0')}`;
-    // After 30s, reveal artist hint
-    if (elapsed >= 30 && !document.getElementById('hint-artist').style.display !== 'none') {
-      document.getElementById('hint-artist').style.display = '';
-      document.getElementById('hint-artist').textContent = `🎤 ${currentSong.artist}`;
-    }
-  }, 500);
-}
-
-function togglePlay() {
-  if (!ytPlayer) return;
-  if (isPlaying) { ytPlayer.pauseVideo(); }
-  else { ytPlayer.playVideo(); }
-}
-function rewind() {
-  if (!ytPlayer || !currentSong) return;
-  ytPlayer.seekTo(currentSong.start, true);
-  ytPlayer.playVideo();
-}
-function skipAhead() {
-  if (!ytPlayer) return;
-  ytPlayer.seekTo((ytPlayer.getCurrentTime() || 0) + 5, true);
-}
-
-// ═══════════════════════════════════════════════
-//  GAME LOGIC
-// ═══════════════════════════════════════════════
 function shuffle(arr) {
   const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
   }
   return a;
 }
 
-function startGame(type) {
-  currentPlaylist = PLAYLISTS[type];
-  const pool = shuffle(currentPlaylist.songs).slice(0, 10);
-  questions = pool;
-  currentQ = 0;
-  score = 0;
-  history = [];
-
-  // UI
-  document.getElementById('select-screen').style.display = 'none';
-  document.getElementById('final-screen').style.display = 'none';
-  document.getElementById('game-screen').style.display = 'block';
-
-  const badge = document.getElementById('game-badge');
-  badge.textContent = type + ' · ' + currentPlaylist.name;
-  badge.className = 'playlist-badge badge-' + currentPlaylist.accent;
-
-  const pf = document.getElementById('progress-fill');
-  pf.className = 'progress-fill fill-' + currentPlaylist.accent;
-
-  const nb = document.getElementById('next-btn');
-  nb.className = 'next-btn btn-' + currentPlaylist.accent;
-
-  const pb = document.getElementById('play-btn');
-  pb.className = 'ctrl-btn primary btn-' + currentPlaylist.accent;
-
-  loadQuestion();
+function buildQuestions() {
+  const pool = shuffle(SONGS);
+  questions = pool.slice(0, TOTAL_Q).map(answer => {
+    const wrong = shuffle(SONGS.filter(s => s !== answer)).slice(0, 3);
+    const opts = shuffle([answer, ...wrong]);
+    return { answer, opts };
+  });
 }
 
-function loadQuestion() {
+function startGame() {
+  buildQuestions();
+  current = 0; score = 0; answered = false;
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('endScreen').classList.add('hidden');
+  document.getElementById('gameArea').classList.remove('hidden');
+  renderQuestion();
+}
+
+function restartGame() {
+  clearSpotify();
+  startGame();
+}
+
+function clearSpotify() {
+  const frame = document.getElementById('spotifyFrame');
+  frame.src = '';
+  frame.style.display = 'none';
+  document.getElementById('spotifyPlaceholder').style.display = 'flex';
+}
+
+function loadSpotify(trackId) {
+  const frame = document.getElementById('spotifyFrame');
+  const placeholder = document.getElementById('spotifyPlaceholder');
+  placeholder.textContent = '載入中…';
+  placeholder.style.display = 'flex';
+  frame.style.display = 'none';
+  frame.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`;
+  frame.height = '80';
+  frame.onload = () => {
+    placeholder.style.display = 'none';
+    frame.style.display = 'block';
+  };
+}
+
+function renderQuestion() {
   answered = false;
-  clearInterval(timerInterval);
-  const q = questions[currentQ];
-  currentSong = q;
+  const q = questions[current];
+  document.getElementById('qCounter').textContent = `第 ${current+1} / ${TOTAL_Q} 題`;
+  document.getElementById('progressFill').style.width = (current / TOTAL_Q * 100) + '%';
+  document.getElementById('scoreBadge').textContent = score + ' 分';
 
-  // Update progress
-  document.getElementById('q-num').textContent = currentQ + 1;
-  document.getElementById('score-num').textContent = score;
-  document.getElementById('progress-fill').style.width = ((currentQ / 10) * 100) + '%';
+  document.getElementById('feedbackBar').className = 'feedback-bar';
+  document.getElementById('nextBtn').classList.remove('visible');
 
-  // Reset UI
-  document.getElementById('result-msg').className = 'result-msg';
-  document.getElementById('next-btn').style.display = 'none';
-  document.getElementById('hint-duration').textContent = '⏱ 0:00';
-  document.getElementById('hint-artist').style.display = 'none';
-  document.getElementById('player-status').textContent = '載入中…';
-  document.getElementById('vinyl-disc').className = 'vinyl';
+  loadSpotify(q.answer.id);
 
-  // Build options: 1 correct + 3 distractors from same playlist
-  const pool = currentPlaylist.songs.filter(s => s.id !== q.id);
-  const distractors = shuffle(pool).slice(0, 3);
-  const options = shuffle([q, ...distractors]);
-
-  const grid = document.getElementById('options-grid');
+  const grid = document.getElementById('optionsGrid');
   grid.innerHTML = '';
-  const keys = ['1', '2', '3', '4'];
-  options.forEach((opt, i) => {
+  q.opts.forEach((opt, i) => {
     const btn = document.createElement('button');
-    btn.className = 'option-btn';
-    btn.dataset.id = opt.id;
-    btn.dataset.title = opt.title;
-    btn.innerHTML = `
-      <div class="option-key">${keys[i]}</div>
-      <div class="option-text">${opt.title}</div>
-      <div class="option-sub">${opt.artist}</div>
-    `;
-    btn.onclick = () => answer(opt.id, q.id, btn);
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-key">${KEYS[i]}</span><span class="opt-text"><div class="opt-song">${opt.song}</div><div class="opt-band">${opt.band}</div></span>`;
+    btn.onclick = () => answer(i);
     grid.appendChild(btn);
   });
-
-  // Load YouTube
-  loadSong(q.id, q.start);
 }
 
-function answer(selectedId, correctId, btn) {
+function answer(idx) {
   if (answered) return;
   answered = true;
+  const q = questions[current];
+  const isCorrect = q.opts[idx] === q.answer;
+  if (isCorrect) score += POINTS_PER_Q;
 
-  const correct = selectedId === correctId;
-  const pts = correct ? 10 : 0;
-  score += pts;
-  history.push({ q: questions[currentQ], correct });
-
-  // Highlight buttons
-  document.querySelectorAll('.option-btn').forEach(b => {
-    b.disabled = true;
-    if (b.dataset.id === correctId) b.classList.add('correct');
-    else if (b === btn && !correct) b.classList.add('wrong');
+  const btns = document.querySelectorAll('.opt-btn');
+  const correctIdx = q.opts.indexOf(q.answer);
+  btns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === correctIdx) btn.classList.add('correct');
+    else if (i === idx && !isCorrect) btn.classList.add('wrong');
   });
 
-  // Result message
-  const msg = document.getElementById('result-msg');
-  if (correct) {
-    msg.textContent = `✅ 答對了！+10 分｜《${questions[currentQ].title}》`;
-    msg.className = 'result-msg correct';
+  const fb = document.getElementById('feedbackBar');
+  const fbText = document.getElementById('feedbackText');
+  const fbIcon = document.getElementById('feedbackIcon');
+  if (isCorrect) {
+    fb.className = 'feedback-bar correct';
+    fbIcon.textContent = '✓';
+    fbText.textContent = `答對了！《${q.answer.song}》— ${q.answer.band}`;
   } else {
-    msg.textContent = `❌ 答錯了！正確答案是《${questions[currentQ].title}》`;
-    msg.className = 'result-msg wrong';
+    fb.className = 'feedback-bar wrong';
+    fbIcon.textContent = '✗';
+    fbText.textContent = `答錯了。正確答案是《${q.answer.song}》— ${q.answer.band}`;
   }
-
-  // Stop music
-  if (ytPlayer) ytPlayer.stopVideo();
-  clearInterval(timerInterval);
-
-  // Show next
-  const nb = document.getElementById('next-btn');
-  nb.style.display = 'block';
-  nb.textContent = currentQ < 9 ? '下一題 →' : '查看結果 🏆';
-
-  document.getElementById('score-num').textContent = score;
+  document.getElementById('scoreBadge').textContent = score + ' 分';
+  const nb = document.getElementById('nextBtn');
+  nb.textContent = current + 1 < TOTAL_Q ? '下一題 →' : '看結果 →';
+  nb.classList.add('visible');
 }
 
 function nextQuestion() {
-  currentQ++;
-  if (currentQ >= 10) { showFinal(); return; }
-  loadQuestion();
+  current++;
+  if (current >= TOTAL_Q) { showEnd(); }
+  else { renderQuestion(); }
 }
 
-function showFinal() {
-  document.getElementById('game-screen').style.display = 'none';
-  document.getElementById('final-screen').style.display = 'block';
-
-  const final = document.getElementById('final-score');
-  final.textContent = score;
-
-  const pct = score / 100;
-  const emoji = pct >= 0.9 ? '🏆' : pct >= 0.7 ? '🎉' : pct >= 0.5 ? '🎵' : '💪';
-  document.getElementById('final-emoji').textContent = emoji;
-
-  // Color score by playlist
-  final.style.color = `var(--accent-${currentPlaylist.accent})`;
-
-  // Breakdown
-  const bd = document.getElementById('breakdown');
-  const correct = history.filter(h => h.correct).length;
-  bd.innerHTML = `
-    <div class="breakdown-row"><span><span class="breakdown-icon">🎵</span>歌單</span><span>${currentPlaylist.name}</span></div>
-    <div class="breakdown-row"><span><span class="breakdown-icon">✅</span>答對</span><span>${correct} / 10 題</span></div>
-    <div class="breakdown-row"><span><span class="breakdown-icon">❌</span>答錯</span><span>${10 - correct} / 10 題</span></div>
-    <div class="breakdown-row"><span><span class="breakdown-icon">⭐</span>最終得分</span><span style="font-weight:700;color:var(--accent-${currentPlaylist.accent})">${score} 分</span></div>
-  `;
-
-  if (ytPlayer) ytPlayer.stopVideo();
-  clearInterval(timerInterval);
+function showEnd() {
+  clearSpotify();
+  document.getElementById('gameArea').classList.add('hidden');
+  document.getElementById('endScreen').classList.remove('hidden');
+  document.getElementById('finalScore').textContent = score + ' 分';
+  let rank, msg;
+  if (score===100) { rank='🏆 完美聽力！'; msg='你根本就是台灣獨立樂團活字典！'; }
+  else if (score>=80) { rank='🎸 樂團通'; msg='很厲害！你對台灣樂團相當熟悉。'; }
+  else if (score>=60) { rank='🎵 入門玩家'; msg='不錯喔！繼續多聽台灣樂團的歌吧。'; }
+  else if (score>=40) { rank='🎧 音樂新手'; msg='有幾首猜對了！繼續加油，再試一次吧！'; }
+  else { rank='🌱 初學者'; msg='台灣有很多好聽的樂團等你探索！'; }
+  document.getElementById('finalRank').textContent = rank;
+  document.getElementById('finalMsg').textContent = msg;
 }
 
-function goBack() {
-  document.getElementById('final-screen').style.display = 'none';
-  document.getElementById('game-screen').style.display = 'none';
-  document.getElementById('select-screen').style.display = 'block';
-  if (ytPlayer) ytPlayer.stopVideo();
-  clearInterval(timerInterval);
-}
-
-// ── Keyboard shortcuts ──
-document.addEventListener('keydown', (e) => {
-  if (document.getElementById('game-screen').style.display === 'none') return;
-  if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); togglePlay(); }
-  if (['1','2','3','4'].includes(e.key)) {
-    const btns = document.querySelectorAll('.option-btn');
-    const idx = parseInt(e.key) - 1;
-    if (btns[idx] && !btns[idx].disabled) btns[idx].click();
+document.addEventListener('keydown', e => {
+  const key = e.key.toUpperCase();
+  if (['A','B','C','D'].includes(key) && !answered) {
+    answer(KEYS.indexOf(key));
   }
-  if ((e.key === 'Enter' || e.key === 'ArrowRight') && document.getElementById('next-btn').style.display !== 'none') {
-    document.getElementById('next-btn').click();
+  if ((key==='ENTER'||key==='N') && answered) {
+    nextQuestion();
   }
 });
 </script>
-
-<!-- Load YouTube IFrame API -->
-<script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
