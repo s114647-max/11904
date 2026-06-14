@@ -27,29 +27,26 @@ body {
   color: var(--text);
   font-family: 'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: flex; flex-direction: column; align-items: center;
   padding: 0 1rem 4rem;
 }
 .site-header {
-  width: 100%; max-width: 680px;
+  width: 100%; max-width: 720px;
   padding: 2rem 0 1.5rem;
   display: flex; align-items: center; gap: 1rem;
   border-bottom: 0.5px solid var(--border);
   margin-bottom: 2rem;
 }
 .logo-icon {
-  width: 44px; height: 44px;
-  background: var(--accent);
+  width: 44px; height: 44px; background: var(--accent);
   border-radius: var(--radius-sm);
   display: flex; align-items: center; justify-content: center;
   font-size: 22px; flex-shrink: 0; color: #111;
 }
 .site-header h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.03em; }
 .site-header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.game-wrap { width: 100%; max-width: 720px; }
 .scorebar {
-  width: 100%; max-width: 680px;
   display: flex; align-items: center; gap: 1rem;
   margin-bottom: 1.25rem;
 }
@@ -57,31 +54,49 @@ body {
 .progress-track { flex:1; height:4px; background:var(--surface2); border-radius:99px; overflow:hidden; }
 .progress-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .4s ease; }
 .score-badge { font-size:13px; font-weight:600; color:var(--accent); white-space:nowrap; }
+
+/* YouTube player */
+.yt-wrap {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 */
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+  margin-bottom: 1.25rem;
+}
+.yt-wrap iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border: none;
+}
+/* blur overlay — revealed after answer */
+.yt-blur-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  background: rgba(13,13,13,0.55);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px;
+  transition: opacity .35s;
+  z-index: 2;
+  pointer-events: none;
+}
+.yt-blur-overlay.hidden { opacity: 0; pointer-events: none; }
+.yt-blur-label {
+  font-size: 15px; color: rgba(240,236,228,0.5);
+  letter-spacing: 0.05em;
+}
+
 .card {
-  width: 100%; max-width: 680px;
   background: var(--surface);
   border: 0.5px solid var(--border);
   border-radius: var(--radius);
   padding: 1.5rem;
   margin-bottom: 1rem;
-}
-.spotify-wrap {
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  background: #000;
-  margin-bottom: 1.25rem;
-  position: relative;
-  min-height: 80px;
-}
-.spotify-wrap iframe {
-  display: block;
-  width: 100%;
-  border: none;
-}
-.spotify-placeholder {
-  display: flex; align-items: center; justify-content: center;
-  min-height: 80px;
-  color: var(--muted); font-size: 14px;
 }
 .options-grid {
   display: grid;
@@ -93,11 +108,8 @@ body {
   border: 0.5px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 14px 14px;
-  text-align: left;
-  cursor: pointer;
-  color: var(--text);
-  font-size: 14px;
-  line-height: 1.4;
+  text-align: left; cursor: pointer;
+  color: var(--text); font-size: 14px; line-height: 1.4;
   transition: background .12s, border-color .12s, transform .1s;
   display: flex; align-items: flex-start; gap: 10px;
 }
@@ -117,17 +129,17 @@ body {
 .opt-btn.wrong { background: var(--wrong-dim); border-color: var(--wrong); }
 .opt-btn.wrong .opt-key { background: var(--wrong); color: #fff; }
 .opt-btn:disabled { cursor: not-allowed; }
+
 .feedback-bar {
-  width: 100%; max-width: 680px;
   border-radius: var(--radius-sm);
-  padding: 13px 18px;
-  font-size: 14px;
+  padding: 13px 18px; font-size: 14px;
   display: none; align-items: center; gap: 10px;
   margin-bottom: 1rem;
 }
 .feedback-bar.correct { display:flex; background:var(--correct-dim); border:0.5px solid var(--correct); color:var(--correct); }
 .feedback-bar.wrong { display:flex; background:var(--wrong-dim); border:0.5px solid var(--wrong); color:var(--wrong); }
 .feedback-bar span { color: var(--text); font-size:13px; }
+
 .next-btn {
   background: var(--accent); color: #111;
   border: none; border-radius: var(--radius-sm);
@@ -138,15 +150,16 @@ body {
 .next-btn:hover { transform: scale(1.03); }
 .next-btn:active { transform: scale(0.97); }
 .next-btn.visible { display: block; }
+
 .screen {
-  width: 100%; max-width: 680px;
+  width: 100%; max-width: 720px;
   background: var(--surface);
   border: 0.5px solid var(--border);
   border-radius: var(--radius);
   padding: 3rem 2rem; text-align: center;
 }
 .screen h2 { font-size: 24px; font-weight: 600; margin-bottom: .5rem; }
-.screen p { color: var(--muted); font-size: 15px; line-height: 1.7; margin-bottom: 1.5rem; }
+.screen > p { color: var(--muted); font-size: 15px; line-height: 1.7; margin-bottom: 1.5rem; }
 .screen .big-score { font-size: 72px; font-weight: 700; color: var(--accent); line-height: 1; margin: 1.5rem 0; }
 .screen .rank { font-size: 18px; color: var(--muted); margin-bottom: 1.5rem; }
 .start-btn, .restart-btn {
@@ -158,16 +171,20 @@ body {
 .start-btn:hover, .restart-btn:hover { transform: scale(1.03); }
 .keyboard-hint { font-size: 12px; color: var(--muted); text-align: center; margin-top: .75rem; }
 .hidden { display: none !important; }
-.notice-box {
-  width: 100%; max-width: 680px;
-  background: rgba(232,200,74,0.08);
-  border: 0.5px solid rgba(232,200,74,0.3);
-  border-radius: var(--radius-sm);
-  padding: 12px 16px;
-  font-size: 13px; color: #c8a830;
-  margin-bottom: 1rem;
-  line-height: 1.6;
+
+.results-list { margin: 1.5rem 0; text-align: left; }
+.result-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--border);
+  font-size: 14px;
 }
+.result-item:last-child { border-bottom: none; }
+.result-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.result-dot.ok { background: var(--correct); }
+.result-dot.no { background: var(--wrong); }
+.result-song { flex: 1; }
+.result-band { font-size: 12px; color: var(--muted); margin-top: 1px; }
 </style>
 </head>
 <body>
@@ -183,45 +200,47 @@ body {
 <!-- START SCREEN -->
 <div class="screen" id="startScreen">
   <h2>準備好了嗎？</h2>
-  <p>透過 Spotify 播放器試聽歌曲，猜出正確的歌名。<br>
-  共十題，每題 10 分，滿分 100 分。<br>
-  鍵盤 A / B / C / D 選答，Space 可控制播放。</p>
+  <p>遊戲共十題，每題播放一段 YouTube MV，<br>
+  從四個選項中猜出正確的歌名。<br><br>
+  🎬 影片會自動播放並<strong>隱藏畫面</strong>（防止看到歌名），<br>
+  只靠耳朵來判斷！答題後才揭開影片。<br><br>
+  鍵盤 A / B / C / D 選答，Enter 下一題。</p>
   <button class="start-btn" onclick="startGame()">開始遊戲</button>
 </div>
 
 <!-- GAME AREA -->
-<div id="gameArea" class="hidden" style="width:100%;max-width:680px;">
+<div id="gameArea" class="hidden">
+  <div class="game-wrap">
+    <div class="scorebar">
+      <span class="q-counter" id="qCounter">第 1 / 10 題</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <span class="score-badge" id="scoreBadge">0 分</span>
+    </div>
 
-  <div class="scorebar">
-    <span class="q-counter" id="qCounter">第 1 / 10 題</span>
-    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-    <span class="score-badge" id="scoreBadge">0 分</span>
-  </div>
-
-  <div class="notice-box" id="noticeBox">
-    💡 需要登入 Spotify 才能完整播放；未登入可聽 <strong>30 秒預覽片段</strong>。播放器載入後請稍候，可能需要幾秒鐘。
-  </div>
-
-  <div class="card">
-    <!-- Spotify embed -->
-    <div class="spotify-wrap" id="spotifyWrap">
-      <div class="spotify-placeholder" id="spotifyPlaceholder">載入中…</div>
-      <iframe id="spotifyFrame" style="display:none;" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    <!-- YouTube player with blur overlay -->
+    <div class="yt-wrap">
+      <iframe id="ytFrame" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      <div class="yt-blur-overlay" id="blurOverlay">
+        <span style="font-size:32px;">🎵</span>
+        <span class="yt-blur-label">仔細聆聽，這是哪首歌？</span>
+      </div>
     </div>
 
     <!-- Options -->
-    <div class="options-grid" id="optionsGrid"></div>
-  </div>
+    <div class="card">
+      <div class="options-grid" id="optionsGrid"></div>
+    </div>
 
-  <div class="feedback-bar" id="feedbackBar">
-    <strong id="feedbackIcon">✓</strong>
-    <span id="feedbackText"></span>
-  </div>
+    <div class="feedback-bar" id="feedbackBar">
+      <strong id="feedbackIcon">✓</strong>
+      <span id="feedbackText"></span>
+    </div>
 
-  <div style="text-align:center;">
-    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">下一題 →</button>
+    <div style="text-align:center;">
+      <button class="next-btn" id="nextBtn" onclick="nextQuestion()">下一題 →</button>
+    </div>
+    <p class="keyboard-hint">鍵盤快捷鍵：A B C D 選答 · Enter / N 下一題</p>
   </div>
-  <p class="keyboard-hint">鍵盤快捷鍵：A B C D 選答 · Enter / N 下一題</p>
 </div>
 
 <!-- END SCREEN -->
@@ -230,39 +249,47 @@ body {
   <div class="big-score" id="finalScore">0</div>
   <div class="rank" id="finalRank"></div>
   <p id="finalMsg"></p>
+  <div class="results-list" id="resultsList"></div>
   <button class="restart-btn" onclick="restartGame()">再玩一次</button>
 </div>
 
 <script>
 const SONGS = [
-  { song:'捲菸', band:'美秀集團', id:'7ks6KrwN2DKhEm06X85qEK' },
-  { song:'愛情的大壞蛋', band:'美秀集團', id:'0OmFkWvBbUxXjGMjWoHBnj' },
-  { song:'戀人', band:'美秀集團', id:'3BaANp3Pk4gEA4vPJDdRkF' },
-  { song:'我要你愛', band:'美秀集團', id:'3uNJHOe5kNb0HJ7tpRzEZo' },
-  { song:'電火王', band:'美秀集團', id:'6Wm3oOYZhCEqt1v0qXUNeY' },
-  { song:'長途夜車', band:'滅火器 Fire EX.', id:'2DZLyqxPBCziw1YJOWPCjQ' },
-  { song:'島嶼天光', band:'滅火器 Fire EX.', id:'4uZrEi9OP8VW1LbBRl61fd' },
-  { song:'人生尾路', band:'滅火器 Fire EX.', id:'7bv7M3dxcbrnDOhV11otMb' },
-  { song:'床', band:'草東沒有派對', id:'7iNnvOWQSTQPLn5WPu0gdU' },
-  { song:'但', band:'草東沒有派對', id:'54hpc7UxPBdpcsC7xFKEWB' },
-  { song:'我還年輕我還年輕', band:'老王樂隊', id:'5o48kuQnPwhuRAzO2t0bCU' },
-  { song:'能不能和我留在台北', band:'icyball 冰球樂團', id:'4u2nqzrQ3p1EGCFhOw0YR1' },
-  { song:'醉後喜歡我', band:'icyball 冰球樂團', id:'1gWS5LE8aPHfJzD5bPFnIj' },
-  { song:'搖啊搖', band:'icyball 冰球樂團', id:'4DV0JEJfCgSBsK5TSdCCzL' },
-  { song:'我想和你一起', band:'溫蒂漫步 Wendy Wander', id:'5WQHwGYKN3V6QFG9QC5Bvp' },
-  { song:'離開的一路上', band:'理想混蛋 Bestards', id:'1J0DkyMzpOYv1D6Hm1oEpv' },
-  { song:'相愛就是說了100次對不起', band:'Crispy脆樂團', id:'6NhLFpRzGxvDNM2uxjRqSD' },
-  { song:'揹上悲傷北上', band:'Crispy脆樂團', id:'4vI8Vr5FfGmqhm9klbJKPQ' },
-  { song:'黑暗的盡頭', band:'Crispy脆樂團', id:'2Fh1VTD9vhJAL0Tm3iVBCq' },
-  { song:'嗜愛動物', band:'麋先生 MIXER', id:'1Bg7bFqe8TfXVnGJbN3BpT' },
-  { song:'菸癮', band:'Who Cares 胡凱兒', id:'5I5M9DQvMhiJMHGDJZBmxZ' },
-  { song:'花季', band:'Who Cares 胡凱兒', id:'3v3K4aaGpGu2pPAlcSF3vA' },
-  { song:'擱淺的人', band:'康士坦的變化球', id:'0SKW7Q3G0MkqAXLxRMdIFY' },
-  { song:'美好的事可不可以發生在我身上', band:'康士坦的變化球', id:'5BhyM4mYP6wJf35W9r4HQm' },
-  { song:'留下來陪我', band:'粗大Band', id:'0JsEDDCbA9IqUGdD0EKTAZ' },
-  { song:'魚', band:'怕胖團 PAPUN BAND', id:'1DwFZkrNwFNR2f31j8sLY2' },
-  { song:'大海', band:'南西肯恩 NeciKen', id:'2mNPfJ2bLTnzJFWD9ePcmH' },
-  { song:'在這個年代，我們不浪漫', band:'溫室雜草 Easy Weeds', id:'5HgbCOJm6k6ypMqH2J2YDw' },
+  { song:'愛情的大壞蛋', band:'美秀集團', yt:'BnMuQvQyxdY' },
+  { song:'戀人',         band:'美秀集團', yt:'QxXYCJV2Lf0' },
+  { song:'我要你愛',     band:'美秀集團', yt:'3fEJpqGdoMw' },
+  { song:'電火王',       band:'美秀集團', yt:'0WDQZ7Y3Rew' },
+  { song:'捲菸',         band:'美秀集團', yt:'S4JLJVVjevI' },
+  { song:'不在乎',       band:'icyball 冰球樂團', yt:'aIhsZ4PdGT4' },
+  { song:'能不能和我留在台北', band:'icyball 冰球樂團', yt:'Ef3kY8TqRAo' },
+  { song:'醉後喜歡我',   band:'icyball 冰球樂團', yt:'P_ZKqTYZnbA' },
+  { song:'搖啊搖',       band:'icyball 冰球樂團', yt:'7vXa3f0lmFI' },
+  { song:'你到底在選擇什麼', band:'公館青少年 GGteens', yt:'gZGf2dPqjq4' },
+  { song:'要不要跟我出去走一走', band:'公館青少年 GGteens', yt:'WFo5E3fJbLk' },
+  { song:'逐漸抽離你的慣性', band:'公館青少年 GGteens', yt:'WA7FHBHaBMI' },
+  { song:'我想和你一起', band:'溫蒂漫步 Wendy Wander', yt:'2I3V-kBBh5U' },
+  { song:'留下來陪我',   band:'粗大Band', yt:'u7G3RPEK0W8' },
+  { song:'大薯',         band:'粗大Band', yt:'GyCFwOqjpBc' },
+  { song:'菸癮',         band:'Who Cares 胡凱兒', yt:'VrQjV0UzPTI' },
+  { song:'花季',         band:'Who Cares 胡凱兒', yt:'zDxVzGl9rms' },
+  { song:'離開的一路上', band:'理想混蛋 Bestards', yt:'DpBLw17q1WY' },
+  { song:'相愛就是說了100次對不起', band:'Crispy脆樂團', yt:'PfcKDO2HB5w' },
+  { song:'揹上悲傷北上', band:'Crispy脆樂團', yt:'y9lbSmPOSF8' },
+  { song:'黑暗的盡頭',   band:'Crispy脆樂團', yt:'1nS_LLQIG2k' },
+  { song:'魚',           band:'怕胖團 PAPUN BAND', yt:'EGjSQNKbbA0' },
+  { song:'嗜愛動物',     band:'麋先生 MIXER', yt:'TjsNKsTr_IY' },
+  { song:'長途夜車',     band:'滅火器 Fire EX.', yt:'V8s81RKEWLE' },
+  { song:'島嶼天光',     band:'滅火器 Fire EX.', yt:'Fvh28b-Cdi4' },
+  { song:'人生尾路',     band:'滅火器 Fire EX.', yt:'hJPmrKMO2Hs' },
+  { song:'床',           band:'草東沒有派對', yt:'sLrDyRrH3FY' },
+  { song:'但',           band:'草東沒有派對', yt:'P0a7PL-fvSs' },
+  { song:'擱淺的人',     band:'康士坦的變化球', yt:'HJQv0r-nGfE' },
+  { song:'美好的事可不可以發生在我身上', band:'康士坦的變化球', yt:'5EDGbD_JCKA' },
+  { song:'我還年輕我還年輕', band:'老王樂隊', yt:'hG0JHn6BSQU' },
+  { song:'在這個年代，我們不浪漫', band:'溫室雜草 Easy Weeds', yt:'w6qEUz30T5Q' },
+  { song:'大海',         band:'南西肯恩 NeciKen', yt:'SJyTVpIm0jA' },
+  { song:'小紫aka給我錢', band:'芒果醬 Mango Jump', yt:'9f9W_B2Ts48' },
+  { song:'爛情歌',       band:'hue', yt:'Xu5b7pQ5Geg' },
 ];
 
 const TOTAL_Q = 10;
@@ -273,6 +300,7 @@ let questions = [];
 let current = 0;
 let score = 0;
 let answered = false;
+let results = []; // track per-question outcome
 
 function shuffle(arr) {
   const a = [...arr];
@@ -294,7 +322,7 @@ function buildQuestions() {
 
 function startGame() {
   buildQuestions();
-  current = 0; score = 0; answered = false;
+  current = 0; score = 0; answered = false; results = [];
   document.getElementById('startScreen').classList.add('hidden');
   document.getElementById('endScreen').classList.add('hidden');
   document.getElementById('gameArea').classList.remove('hidden');
@@ -302,43 +330,36 @@ function startGame() {
 }
 
 function restartGame() {
-  clearSpotify();
+  loadYT('');
+  document.getElementById('gameArea').classList.add('hidden');
   startGame();
 }
 
-function clearSpotify() {
-  const frame = document.getElementById('spotifyFrame');
-  frame.src = '';
-  frame.style.display = 'none';
-  document.getElementById('spotifyPlaceholder').style.display = 'flex';
-}
-
-function loadSpotify(trackId) {
-  const frame = document.getElementById('spotifyFrame');
-  const placeholder = document.getElementById('spotifyPlaceholder');
-  placeholder.textContent = '載入中…';
-  placeholder.style.display = 'flex';
-  frame.style.display = 'none';
-  frame.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`;
-  frame.height = '80';
-  frame.onload = () => {
-    placeholder.style.display = 'none';
-    frame.style.display = 'block';
-  };
+function loadYT(videoId) {
+  const frame = document.getElementById('ytFrame');
+  if (!videoId) { frame.src = ''; return; }
+  // autoplay=1, mute=0 so audio plays; start=10 to skip intros
+  frame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&start=10&rel=0&modestbranding=1&iv_load_policy=3`;
 }
 
 function renderQuestion() {
   answered = false;
   const q = questions[current];
+
   document.getElementById('qCounter').textContent = `第 ${current+1} / ${TOTAL_Q} 題`;
   document.getElementById('progressFill').style.width = (current / TOTAL_Q * 100) + '%';
   document.getElementById('scoreBadge').textContent = score + ' 分';
-
   document.getElementById('feedbackBar').className = 'feedback-bar';
   document.getElementById('nextBtn').classList.remove('visible');
 
-  loadSpotify(q.answer.id);
+  // show blur overlay
+  const overlay = document.getElementById('blurOverlay');
+  overlay.classList.remove('hidden');
 
+  // load video
+  loadYT(q.answer.yt);
+
+  // render options
   const grid = document.getElementById('optionsGrid');
   grid.innerHTML = '';
   q.opts.forEach((opt, i) => {
@@ -353,10 +374,16 @@ function renderQuestion() {
 function answer(idx) {
   if (answered) return;
   answered = true;
+
   const q = questions[current];
   const isCorrect = q.opts[idx] === q.answer;
   if (isCorrect) score += POINTS_PER_Q;
+  results.push({ answer: q.answer, correct: isCorrect });
 
+  // reveal video
+  document.getElementById('blurOverlay').classList.add('hidden');
+
+  // highlight options
   const btns = document.querySelectorAll('.opt-btn');
   const correctIdx = q.opts.indexOf(q.answer);
   btns.forEach((btn, i) => {
@@ -365,19 +392,16 @@ function answer(idx) {
     else if (i === idx && !isCorrect) btn.classList.add('wrong');
   });
 
+  // feedback
   const fb = document.getElementById('feedbackBar');
-  const fbText = document.getElementById('feedbackText');
-  const fbIcon = document.getElementById('feedbackIcon');
-  if (isCorrect) {
-    fb.className = 'feedback-bar correct';
-    fbIcon.textContent = '✓';
-    fbText.textContent = `答對了！《${q.answer.song}》— ${q.answer.band}`;
-  } else {
-    fb.className = 'feedback-bar wrong';
-    fbIcon.textContent = '✗';
-    fbText.textContent = `答錯了。正確答案是《${q.answer.song}》— ${q.answer.band}`;
-  }
+  document.getElementById('feedbackIcon').textContent = isCorrect ? '✓' : '✗';
+  document.getElementById('feedbackText').textContent = isCorrect
+    ? `答對了！《${q.answer.song}》— ${q.answer.band}`
+    : `答錯了。正確答案是《${q.answer.song}》— ${q.answer.band}`;
+  fb.className = 'feedback-bar ' + (isCorrect ? 'correct' : 'wrong');
+
   document.getElementById('scoreBadge').textContent = score + ' 分';
+
   const nb = document.getElementById('nextBtn');
   nb.textContent = current + 1 < TOTAL_Q ? '下一題 →' : '看結果 →';
   nb.classList.add('visible');
@@ -390,26 +414,50 @@ function nextQuestion() {
 }
 
 function showEnd() {
-  clearSpotify();
+  loadYT('');
   document.getElementById('gameArea').classList.add('hidden');
-  document.getElementById('endScreen').classList.remove('hidden');
+  const end = document.getElementById('endScreen');
+  end.classList.remove('hidden');
+
   document.getElementById('finalScore').textContent = score + ' 分';
+
   let rank, msg;
-  if (score===100) { rank='🏆 完美聽力！'; msg='你根本就是台灣獨立樂團活字典！'; }
-  else if (score>=80) { rank='🎸 樂團通'; msg='很厲害！你對台灣樂團相當熟悉。'; }
-  else if (score>=60) { rank='🎵 入門玩家'; msg='不錯喔！繼續多聽台灣樂團的歌吧。'; }
-  else if (score>=40) { rank='🎧 音樂新手'; msg='有幾首猜對了！繼續加油，再試一次吧！'; }
-  else { rank='🌱 初學者'; msg='台灣有很多好聽的樂團等你探索！'; }
+  if (score === 100) { rank = '🏆 完美聽力！'; msg = '你根本就是台灣獨立樂團活字典！'; }
+  else if (score >= 80) { rank = '🎸 樂團通'; msg = '很厲害！你對台灣樂團相當熟悉。'; }
+  else if (score >= 60) { rank = '🎵 入門玩家'; msg = '不錯喔！繼續多聽台灣樂團的歌吧。'; }
+  else if (score >= 40) { rank = '🎧 音樂新手'; msg = '有幾首猜對了！繼續加油，再試一次吧！'; }
+  else { rank = '🌱 初學者'; msg = '台灣有很多好聽的樂團等你探索！'; }
+
   document.getElementById('finalRank').textContent = rank;
   document.getElementById('finalMsg').textContent = msg;
+
+  // Results list
+  const list = document.getElementById('resultsList');
+  list.innerHTML = '';
+  results.forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'result-item';
+    div.innerHTML = `
+      <span class="result-dot ${r.correct ? 'ok' : 'no'}"></span>
+      <span style="min-width:20px;font-size:12px;color:var(--muted);">Q${i+1}</span>
+      <span class="result-song">
+        <div>${r.answer.song}</div>
+        <div class="result-band">${r.answer.band}</div>
+      </span>
+      <span style="font-size:13px;color:${r.correct ? 'var(--correct)' : 'var(--wrong)'}">
+        ${r.correct ? '+10' : '0'}
+      </span>`;
+    list.appendChild(div);
+  });
 }
 
 document.addEventListener('keydown', e => {
   const key = e.key.toUpperCase();
-  if (['A','B','C','D'].includes(key) && !answered) {
+  if (['A','B','C','D'].includes(key) && !answered &&
+      !document.getElementById('gameArea').classList.contains('hidden')) {
     answer(KEYS.indexOf(key));
   }
-  if ((key==='ENTER'||key==='N') && answered) {
+  if ((key === 'ENTER' || key === 'N') && answered) {
     nextQuestion();
   }
 });
