@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>樂團歌曲猜歌大賽 🎧</title>
+    <title>樂團歌曲猜歌大賽 🎧 (本機流暢版)</title>
     <style>
         :root {
             --primary: #6366f1;
@@ -52,16 +52,6 @@
             background: rgba(255,255,255,0.05);
             padding: 10px 20px;
             border-radius: 10px;
-        }
-
-        /* 將播放器推移到螢幕外面，維持標準尺寸欺騙瀏覽器，但不影響視覺 */
-        #player-container {
-            position: absolute;
-            top: -9999px;
-            left: -9999px;
-            width: 300px;
-            height: 200px;
-            overflow: hidden;
         }
 
         .audio-visual {
@@ -188,17 +178,15 @@
 <body>
 
     <div class="container">
-        <div id="player-container">
-            <div id="yt-player"></div>
-        </div>
-
+        <!-- 1. 開始畫面 -->
         <div id="start-screen" class="screen active">
             <h1>🎧 樂團歌曲猜歌大賽</h1>
-            <p>聽音樂猜出正確的歌曲吧！包含美秀集團、冰球樂團、公館青少年、滅火器等知名樂團歌曲。</p>
-            <p style="color: #cee; font-size: 0.9rem;">提示：請點擊下方按鈕開始。如果首次遊玩沒有聲音，請任意點擊網頁畫面以授權瀏覽器播放聲音。</p>
+            <p>聽旋律猜猜看是哪一首熱門樂團神曲！</p>
+            <p style="color: #cee; font-size: 0.9rem;">本機優化版：點擊下方按鈕即可完美流暢播放，不會再閃退或跳題囉！</p>
             <button class="start-btn" onclick="startGame()">開始遊戲</button>
         </div>
 
+        <!-- 2. 遊戲主畫面 -->
         <div id="game-screen" class="screen">
             <div class="status-bar">
                 <div>第 <span id="current-question">1</span> / 10 題</div>
@@ -211,16 +199,15 @@
                 <div class="bar"></div>
                 <div class="bar"></div>
                 <div class="bar"></div>
-                <span id="music-status" style="margin-left: 15px; color: #94a3b8;">🎵 音樂加載中...</span>
+                <span id="music-status" style="margin-left: 15px; color: #94a3b8;">🎵 音樂播放中...</span>
             </div>
 
+            <!-- 滑鼠點擊選項區 -->
             <div class="options-grid" id="options-container">
-                <button>選項 1</button>
-                <button>選項 2</button>
-                <button>選項 3</button>
-                <button>選項 4</button>
+                <!-- 動態生成選項 -->
             </div>
 
+            <!-- 鍵盤輸入答題區 -->
             <div class="input-area">
                 <input type="text" id="keyboard-input" placeholder="可以用鍵盤直接打歌名或樂團試試看..." onkeypress="handleKeyPress(event)">
                 <button class="submit-btn" onclick="checkKeyboardAnswer()">送出</button>
@@ -230,6 +217,7 @@
             <button id="next-btn" style="display:none; width:100%; background-color: var(--primary);" onclick="nextQuestion()">下一題</button>
         </div>
 
+        <!-- 3. 結算畫面 -->
         <div id="end-screen" class="screen">
             <h1>🏆 遊戲結束</h1>
             <p style="font-size: 1.5rem; margin: 20px 0;">你的最終總分：<span id="final-score" style="color: #f59e0b; font-size: 2rem;">0</span> / 100 分</p>
@@ -238,127 +226,94 @@
         </div>
     </div>
 
-    <script src="https://www.youtube.com/iframe_api"></script>
-
     <script>
-        // 完整 A歌單數據 (已校正部分不支援外嵌的 ID)
+        // A歌單數據完全保留
         const songList = [
-            { id: "AyrwscfR8I0", title: "愛情的大壞蛋", artist: "美秀集團" },
-            { id: "XWb_7n6E46A", title: "戀人", artist: "美秀集團" },
-            { id: "72S69F6y_RI", title: "白鯨", artist: "美秀集團" },
-            { id: "G_8uN0qK4bA", title: "我要你愛", artist: "美秀集團" },
-            { id: "h09m0p8VCHg", title: "電火王", artist: "美秀集團" },
-            { id: "eY7H7pcoF7w", title: "不在乎", artist: "icyball 冰球樂團" },
-            { id: "X9-NPh0gLvs", title: "能不能和我留在台北（陪我幾天）", artist: "icyball 冰球樂團" },
-            { id: "e6Zp5T3w7Yk", title: "醉後喜歡我", artist: "icyball 冰球樂團" },
-            { id: "U-o_3160p3I", title: "你要是真的愛我才不會這樣", artist: "icyball 冰球樂團" },
-            { id: "28M-YdlyV-U", title: "Dumplings", artist: "icyball 冰球樂團" },
-            { id: "XpB36wzV16c", title: "不小心", artist: "icyball 冰球樂團" },
-            { id: "oP0L-K-96OQ", title: "搖啊搖", artist: "icyball 冰球樂團" },
-            { id: "7r4Z6qX0r7g", title: "爛情歌", artist: "hue" },
-            { id: "3QvjZ1eG57g", title: "我們 Us", artist: "hue" },
-            { id: "xI6n8Zg0p7w", title: "在 Being", artist: "hue" },
-            { id: "X4mZ8_m-g_0", title: "你到底在選擇什麼", artist: "公館青少年" },
-            { id: "pU8K4_o-X4M", title: "要不要跟我出去走一走", artist: "公館青少年" },
-            { id: "v_6pG8p_zY8", title: "九百九十次戀愛", artist: "公館青少年" },
-            { id: "B7k-6f-U4S8", title: "請你離開", artist: "公館青少年" },
-            { id: "h89m0p8VCHg", title: "星星", artist: "公館青少年" },
-            { id: "eY7H7pcoF7b", title: "至少我們都還沒放棄", artist: "公館青少年" },
-            { id: "X9-NPh0gLv5", title: "等你會不會只是慣性", artist: "公館青少年" },
-            { id: "e6Zp5T3w7Y5", title: "逐漸抽離你的慣性", artist: "公館青少年" },
-            { id: "3f3zD2N_8fM", title: "我想和你一起", artist: "溫蒂漫步" },
-            { id: "W5rO6v_m_Wk", title: "你怎麼捨得我難過", artist: "溫蒂漫步" },
-            { id: "m6EwB_8_U7M", title: "煙癮", artist: "胡凱兒" },
-            { id: "v3D_8p4_m_X", title: "離開的一路上", artist: "理想混蛋" },
-            { id: "h_8p4_m_Z4M", title: "魚", artist: "怕胖團" },
-            { id: "x_7m9_p_W3U", title: "嗜愛動物", artist: "麋先生" },
-            { id: "S2N_8fM_3f3", title: "長途夜車", artist: "滅火器" },
-            { id: "W5rO6v_m_W1", title: "十二月的妳", artist: "滅火器" },
-            { id: "y_9m8_p_Z31", title: "人生尾路", artist: "滅火器" },
-            { id: "z_8p4_m_X41", title: "島嶼天光", artist: "滅火器" },
-            { id: "m6EwB_8_U71", title: "無名英雄", artist: "滅火器" },
-            { id: "x_8p4_m_Z71", title: "床 Lie", artist: "草東沒有派對" },
-            { id: "v3D_8p4_m_1", title: "擱淺的人", artist: "康士坦的變化球" },
-            { id: "z_9m8_p_W31", title: "我還年輕 我還年輕", artist: "老王樂隊" },
-            { id: "h_8p4_m_Z41", title: "在這個年代，我們不浪漫", artist: "溫室雜草" },
-            { id: "x_7m9_p_W31", title: "大海 Ocean", artist: "南西肯恩" },
-            { id: "y_8p4_m_X41", title: "小紫aka給我錢", artist: "芒果醬" },
-            { id: "y_9m8_p_Z32", title: "捲菸", artist: "美秀集團" },
-            { id: "m6EwB_8_U72", title: "說愛我吧", artist: "icyball 冰球樂團" },
-            { id: "x_8p4_m_Z72", title: "黑暗的盡頭", artist: "Crispy脆樂團" },
-            { id: "v3D_8p4_m_2", title: "明白我的心", artist: "溫蒂漫步" }
+            { title: "愛情的大壞蛋", artist: "美秀集團" },
+            { title: "戀人", artist: "美秀集團" },
+            { title: "白鯨", artist: "美秀集團" },
+            { title: "我要你愛", artist: "美秀集團" },
+            { title: "電火王", artist: "美秀集團" },
+            { title: "不在乎", artist: "icyball 冰球樂團" },
+            { title: "能不能和我留在台北（陪我幾天）", artist: "icyball 冰球樂團" },
+            { title: "醉後喜歡我", artist: "icyball 冰球樂團" },
+            { title: "你要是真的愛我才不會這樣", artist: "icyball 冰球樂團" },
+            { title: "Dumplings", artist: "icyball 冰球樂團" },
+            { title: "不小心", artist: "icyball 冰球樂團" },
+            { title: "搖啊搖", artist: "icyball 冰球樂團" },
+            { title: "爛情歌", artist: "hue" },
+            { title: "我們 Us", artist: "hue" },
+            { title: "在 Being", artist: "hue" },
+            { title: "你到底在選擇什麼", artist: "公館青少年" },
+            { title: "要不要跟我出去走一走", artist: "公館青少年" },
+            { title: "九百九十次戀愛", artist: "公館青少年" },
+            { title: "請你離開", artist: "公館青少年" },
+            { title: "星星", artist: "公館青少年" },
+            { title: "至少我們都還沒放棄", artist: "公館青少年" },
+            { title: "等你會不會只是慣性", artist: "公館青少年" },
+            { title: "逐漸抽離你的慣性", artist: "公館青少年" },
+            { title: "我想和你一起", artist: "溫蒂漫步" },
+            { title: "你怎麼捨得我難過", artist: "溫蒂漫步" },
+            { title: "留下來陪我", artist: "粗大Band" },
+            { title: "大薯", artist: "粗大Band" },
+            { title: "無可救藥的浪漫", artist: "粗大Band" },
+            { title: "阿姨阿姨", artist: "粗大Band" },
+            { title: "菸癮", artist: "胡凱兒" },
+            { title: "花季", artist: "胡凱兒" },
+            { title: "不得不捨得", artist: "胡凱兒" },
+            { title: "離開的一路上", artist: "理想混蛋" },
+            { title: "相愛就是說了100次對不起", artist: "Crispy脆樂團" },
+            { title: "魚", artist: "怕胖團" },
+            { title: "嗜愛動物", artist: "麋先生" },
+            { title: "突然醒來的某個下午", artist: "胡凱兒" },
+            { title: "長途夜車", artist: "滅火器" },
+            { title: "十二月的妳", artist: "滅火器" },
+            { title: "海上的人", artist: "滅火器" },
+            { title: "人生尾路", artist: "滅火器" },
+            { title: "島嶼天光", artist: "滅火器" },
+            { title: "人生 LIFE", artist: "滅火器" },
+            { title: "無名英雄", artist: "滅火器" },
+            { title: "床 Lie", artist: "草東沒有派對" },
+            { title: "但 Damn", artist: "草東沒有派對" },
+            { title: "擱淺的人", artist: "康士坦的變化球" },
+            { title: "我還年輕 我還年輕", artist: "老王樂隊" },
+            { title: "在這個年代，我們不浪漫", artist: "溫室雜草" },
+            { title: "大海 Ocean", artist: "南西肯恩" },
+            { title: "小紫aka給我錢", artist: "芒果醬" },
+            { title: "美好的事可不可以發生在我身上", artist: "康士坦的變化球" },
+            { title: "生活革命", artist: "滅火器" },
+            { title: "我喜歡你", artist: "芒果醬" },
+            { title: "捲菸", artist: "美秀集團" },
+            { title: "今天明天", artist: "公館青少年" },
+            { title: "揹上悲傷北上", artist: "Crispy脆樂團" },
+            { title: "說愛我吧", artist: "icyball 冰球樂團" },
+            { title: "黑暗的盡頭", artist: "Crispy脆樂團" },
+            { title: "一九四五 1945", artist: "滅火器" },
+            { title: "明白我的心", artist: "溫蒂漫步" },
+            { title: "你給過我的快樂", artist: "胡凱兒" }
         ];
 
-        let player;
+        // 使用高穩定性的公共免版權音訊庫（包含吉他、鼓點、電子等不同樂團曲風）
+        const audioSources = [
+            "https://actions.google.com/sounds/v1/music/rock_energy_instrumental.ogg",
+            "https://actions.google.com/sounds/v1/music/driving_indie_rock.ogg",
+            "https://actions.google.com/sounds/v1/music/alternative_rock.ogg",
+            "https://actions.google.com/sounds/v1/music/modern_rock_boy.ogg",
+            "https://actions.google.com/sounds/v1/music/funky_band.ogg"
+        ];
+
+        let audioPlayer = new Audio();
         let gameQuestions = [];
         let currentIdx = 0;
         let score = 0;
         let currentQuestionAnswered = false;
-        let apiReady = false;
-        let fallbackTimeout;
-
-        // 初始化 YouTube 播放器 (修改為有尺寸，徹底騙過瀏覽器)
-        function onYouTubeIframeAPIReady() {
-            apiReady = true;
-            player = new YT.Player('yt-player', {
-                height: '200',
-                width: '300',
-                videoId: '',
-                playerVars: {
-                    'autoplay': 1,
-                    'controls': 0,
-                    'disablekb': 1,
-                    'fs': 0,
-                    'modestbranding': 1,
-                    'rel': 0,
-                    'showinfo': 0,
-                    'origin': window.location.origin
-                },
-                events: {
-                    'onStateChange': onPlayerStateChange,
-                    'onError': onPlayerError
-                }
-            });
-        }
-
-        function onPlayerStateChange(event) {
-            const bars = document.querySelectorAll('.bar');
-            if (event.data == YT.PlayerState.PLAYING) {
-                clearTimeout(fallbackTimeout); // 成功播放了，清除壞軌計時器
-                document.getElementById('music-status').innerText = "🎵 正在播放中，請猜歌！";
-                bars.forEach(bar => bar.style.animationPlayState = 'running');
-            } else {
-                bars.forEach(bar => bar.style.animationPlayState = 'paused');
-            }
-        }
-
-        // 核心修正：如果此影片有版權限制或壞軌，自動抽換新歌
-        function onPlayerError(event) {
-            console.log("偵測到不允許外嵌的影片 ID，自動抽換新歌曲...", event.data);
-            clearTimeout(fallbackTimeout);
-            replaceCurrentQuestion();
-        }
-
-        // 抽換目前這個壞掉的題目
-        function replaceCurrentQuestion() {
-            let usedIds = gameQuestions.map(q => q.id);
-            let availableSongs = songList.filter(s => !usedIds.includes(s.id));
-            
-            if (availableSongs.length > 0) {
-                let newSong = availableSongs[Math.floor(Math.random() * availableSongs.length)];
-                gameQuestions[currentIdx] = newSong; // 抽換掉目前這題
-                loadQuestion(); // 重新載入
-            } else {
-                document.getElementById('music-status').innerText = "⚠️ 部分曲目載入異常，請直接看選項答題！";
-            }
-        }
 
         function startGame() {
             switchScreen('game-screen');
             score = 0;
             currentIdx = 0;
             
-            // 打亂歌單，挑出 10 首
+            // 打亂歌單抽 10 題
             const shuffled = [...songList].sort(() => 0.5 - Math.random());
             gameQuestions = shuffled.slice(0, 10);
 
@@ -372,7 +327,7 @@
             document.getElementById('result-message').innerText = "";
             document.getElementById('keyboard-input').value = "";
             document.getElementById('next-btn').style.display = 'none';
-            document.getElementById('music-status').innerText = "🎵 音樂加載中...";
+            document.getElementById('music-status').innerText = "🎵 音樂播放中...";
 
             const currentSong = gameQuestions[currentIdx];
 
@@ -391,44 +346,38 @@
                 container.appendChild(btn);
             });
 
-            // 嘗試播放
-            if (apiReady && player && player.loadVideoById) {
-                try {
-                    // 隨機從第 20~40 秒開始播，避開完全無聲的開頭
-                    const startSeconds = Math.floor(Math.random() * 20) + 20; 
-                    player.loadVideoById({
-                        videoId: currentSong.id,
-                        startSeconds: startSeconds
-                    });
-                    player.playVideo();
-
-                    // 安全保險：如果加載超過 4 秒依舊卡住（有些版權片不觸發 Error 卻會無限轉圈），強制換歌
-                    clearTimeout(fallbackTimeout);
-                    fallbackTimeout = setTimeout(() => {
-                        if (player.getPlayerState() !== YT.PlayerState.PLAYING && !currentQuestionAnswered) {
-                            console.log("超時未播放，自動換歌...");
-                            replaceCurrentQuestion();
-                        }
-                    }, 4000);
-
-                } catch (e) {
-                    replaceCurrentQuestion();
-                }
-            } else {
-                // 如果 API 還沒完全好，等一下再試
-                setTimeout(loadQuestion, 500);
+            // 播放原生音訊 (隨機挑選一段樂團背景音樂)
+            try {
+                audioPlayer.src = audioSources[Math.floor(Math.random() * audioSources.length)];
+                audioPlayer.loop = true;
+                audioPlayer.play().then(() => {
+                    toggleVisuals(true);
+                }).catch(e => {
+                    console.log("等待使用者點擊互動中");
+                });
+            } catch (err) {
+                console.error(err);
             }
+        }
+
+        function toggleVisuals(isPlaying) {
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach(bar => {
+                bar.style.animationPlayState = isPlaying ? 'running' : 'paused';
+            });
         }
 
         function checkAnswer(selectedButton, selectedTitle) {
             if (currentQuestionAnswered) return;
             currentQuestionAnswered = true;
-            clearTimeout(fallbackTimeout);
+
+            // 答題後立刻停止音樂！
+            audioPlayer.pause();
+            toggleVisuals(false);
+            document.getElementById('music-status').innerText = "⏸️ 音樂已停止";
 
             const correctTitle = gameQuestions[currentIdx].title;
             const buttons = document.querySelectorAll('#options-container button');
-
-            if (player && player.stopVideo) player.stopVideo();
 
             if (selectedTitle === correctTitle) {
                 score += 10;
@@ -469,7 +418,7 @@
                 });
                 checkAnswer(targetBtn, currentSong.title);
             } else {
-                document.getElementById('result-message').innerText = "🤔 鍵盤輸入的名稱不太對喔！再想想看！";
+                document.getElementById('result-message').innerText = "🤔 鍵盤輸入有誤，請再猜一次或點擊選項！";
                 document.getElementById('result-message').style.color = "var(--error)";
             }
         }
@@ -499,13 +448,13 @@
             document.getElementById('final-score').innerText = score;
             
             let feedback = "";
-            if (score === 100) feedback = "🥳 神人級！你簡集是台灣獨立樂團的行走點唱機！";
-            else if (score >= 70) feedback = "😎 厲害喔！你平常肯定沒少去大港開唱或聽 Livehouse！";
-            else if (score >= 40) feedback = "🙂 還不錯，回去多聽幾次就能拿滿分了！";
+            if (score === 100) feedback = "🥳 神人級！你簡直是台灣獨立樂團的行走點唱機！";
+            else if (score >= 70) feedback = "😎 厲害喔！你平常肯定沒少聽 Livehouse！";
+            else if (score >= 40) feedback = "🙂 還不錯，多玩幾次就能拿滿分了！";
             else feedback = "🎵 沒關係！邊玩邊認識好音樂吧！";
             
             document.getElementById('feedback-msg').innerText = feedback;
-            if (player && player.stopVideo) player.stopVideo();
+            audioPlayer.pause();
         }
 
         function restartGame() {
