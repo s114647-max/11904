@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>樂團歌曲猜歌大賽 🎧 (真實音樂終極版)</title>
+    <title>樂團歌曲猜歌大賽 🎧 (右下角完美發聲版)</title>
     <style>
         :root {
             --primary: #6366f1;
@@ -36,7 +36,6 @@
             max-width: 600px;
             text-align: center;
             box-sizing: border-box;
-            position: relative;
         }
 
         h1 {
@@ -55,20 +54,24 @@
             border-radius: 10px;
         }
 
-        /* 核心機制：寬度設為 1 像素，它就不會遮擋畫面，但能規避瀏覽器限制成功播歌 */
+        /* 核心修改：固定在網頁右下角，縮小成極小視窗（騙過 Chrome 安全靜音機制） */
         #music-box {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            opacity: 0.01;
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 40px;  /* 縮小到極致但保持可見，Chrome 才會允許放聲音 */
+            height: 40px;
+            z-index: 9999;
+            background: #000;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
             overflow: hidden;
-            bottom: 0;
-            left: 0;
+            border: 1px solid var(--primary);
         }
 
         #music-box iframe {
-            width: 100px;
-            height: 100px;
+            width: 100%;
+            height: 100%;
             border: none;
         }
 
@@ -196,18 +199,15 @@
 <body>
 
     <div class="container">
-        <!-- 隱形音樂串流盒，確保本機 100% 聽得到真實歌單聲音 -->
         <div id="music-box"></div>
 
-        <!-- 1. 開始畫面 -->
         <div id="start-screen" class="screen active">
             <h1>🎧 樂團歌曲猜歌大賽</h1>
             <p>即將隨機播放你歌單中 63 首熱門樂團歌曲片段！</p>
-            <p style="color: #cee; font-size: 0.9rem;">提示：本遊戲直接調用 YouTube 原音，本機運行流暢，猜對前音樂不會停！</p>
+            <p style="color: #cee; font-size: 0.9rem;">提示：開始遊戲後，右下角會出現極小視窗負責發聲。若 Chrome 沒聲音，請在畫面任意點一下即可！</p>
             <button class="start-btn" onclick="startGame()">開始遊戲</button>
         </div>
 
-        <!-- 2. 遊戲主畫面 -->
         <div id="game-screen" class="screen">
             <div class="status-bar">
                 <div>第 <span id="current-question">1</span> / 10 題</div>
@@ -223,12 +223,9 @@
                 <span id="music-status" style="margin-left: 15px; color: #94a3b8;">🎵 官方音樂播放中...</span>
             </div>
 
-            <!-- 滑鼠點擊選項區 -->
             <div class="options-grid" id="options-container">
-                <!-- 動態生成選項 -->
-            </div>
+                </div>
 
-            <!-- 鍵盤輸入答題區 -->
             <div class="input-area">
                 <input type="text" id="keyboard-input" placeholder="可以用鍵盤直接打歌名或樂團試試看..." onkeypress="handleKeyPress(event)">
                 <button class="submit-btn" onclick="checkKeyboardAnswer()">送出</button>
@@ -238,7 +235,6 @@
             <button id="next-btn" style="display:none; width:100%; background-color: var(--primary);" onclick="nextQuestion()">下一題</button>
         </div>
 
-        <!-- 3. 結算畫面 -->
         <div id="end-screen" class="screen">
             <h1>🏆 遊戲結束</h1>
             <p style="font-size: 1.5rem; margin: 20px 0;">你的最終總分：<span id="final-score" style="color: #f59e0b; font-size: 2rem;">0</span> / 100 分</p>
@@ -248,7 +244,7 @@
     </div>
 
     <script>
-        // 完整的 A歌單數據（對應你給的所有原創 MV 網址）
+        // 完整的 A歌單數據
         const songList = [
             { id: "AyrwscfR8I0", title: "愛情的大壞蛋", artist: "美秀集團" },
             { id: "XWb_7n6E46A", title: "戀人", artist: "美秀集團" },
@@ -338,7 +334,7 @@
             document.getElementById('result-message').innerText = "";
             document.getElementById('keyboard-input').value = "";
             document.getElementById('next-btn').style.display = 'none';
-            document.getElementById('music-status').innerText = "🎵 音樂正在強力放送中...";
+            document.getElementById('music-status').innerText = "🎵 音樂載入中...";
 
             const currentSong = gameQuestions[currentIdx];
 
@@ -357,10 +353,12 @@
                 container.appendChild(btn);
             });
 
-            // 動態注入真實的 YouTube 影片串流，並開啟自動播放與隨機秒數起播
-            const randomStart = Math.floor(Math.random() * 30) + 30; // 從第 30~60 秒隨機開始（通常是副歌）
+            // 從 35 秒開始播放（完美避開前奏，直接進歌）
+            const startSeconds = 35;
             const musicBox = document.getElementById('music-box');
-            musicBox.innerHTML = `<iframe src="https://www.youtube.com/embed/${currentSong.id}?autoplay=1&start=${randomStart}" allow="autoplay"></iframe>`;
+            
+            // 這裡不使用嵌入隱藏，而是提供標準寬高在右下角，確保 Chrome 發聲
+            musicBox.innerHTML = `<iframe src="https://www.youtube.com/embed/${currentSong.id}?autoplay=1&start=${startSeconds}" allow="autoplay"></iframe>`;
 
             toggleVisuals(true);
         }
@@ -370,16 +368,19 @@
             bars.forEach(bar => {
                 bar.style.animationPlayState = isPlaying ? 'running' : 'paused';
             });
+            if (isPlaying) {
+                document.getElementById('music-status').innerText = "🎵 真實原音強力放送中！";
+            }
         }
 
         function checkAnswer(selectedButton, selectedTitle) {
             if (currentQuestionAnswered) return;
             currentQuestionAnswered = true;
 
-            // 重要：玩家回答的瞬間，立刻清空音樂盒，原音當場停止！
+            // 玩家回答的瞬間，立刻撤除右下角 iframe，原音當場停止！
             document.getElementById('music-box').innerHTML = "";
             toggleVisuals(false);
-            document.getElementById('music-status').innerText = "⏸️ 答題完畢，音樂已停止";
+            document.getElementById('music-status').innerText = "⏸️ 音樂已停止";
 
             const correctTitle = gameQuestions[currentIdx].title;
             const buttons = document.querySelectorAll('#options-container button');
@@ -387,11 +388,11 @@
             if (selectedTitle === correctTitle) {
                 score += 10;
                 selectedButton.classList.add('btn-correct');
-                document.getElementById('result-message').innerText = "🎉 太猛了！完全答對！";
+                document.getElementById('result-message').innerText = "🎉 哇！完全答對！";
                 document.getElementById('result-message').style.color = "var(--success)";
             } else {
                 selectedButton.classList.add('btn-wrong');
-                document.getElementById('result-message').innerText = `❌ 答錯了！這首是：${gameQuestions[currentIdx].artist} - ${correctTitle}`;
+                document.getElementById('result-message').innerText = `❌ 答錯了！正確答案是：${gameQuestions[currentIdx].artist} - ${correctTitle}`;
                 document.getElementById('result-message').style.color = "var(--error)";
                 
                 buttons.forEach(btn => {
@@ -406,7 +407,7 @@
             document.getElementById('next-btn').style.display = 'block';
         }
 
-        // 鍵盤智慧盲打答題機制
+        // 鍵盤智慧盲打
         function checkKeyboardAnswer() {
             if (currentQuestionAnswered) return;
             const inputVal = document.getElementById('keyboard-input').value.trim().toLowerCase();
@@ -416,7 +417,6 @@
             const correctTitle = currentSong.title.toLowerCase();
             const correctArtist = currentSong.artist.toLowerCase();
 
-            // 輸入歌名或樂團名有包含就算對
             if (correctTitle.includes(inputVal) || correctArtist.includes(inputVal)) {
                 const buttons = document.querySelectorAll('#options-container button');
                 let targetBtn = buttons[0];
@@ -458,10 +458,10 @@
             if (score === 100) feedback = "🥳 天生搖滾魂！你簡直是這群樂團的行走點唱機！";
             else if (score >= 70) feedback = "😎 忠實樂迷！歌單裡的歌你都熟到不行！";
             else if (score >= 40) feedback = "🙂 聽得蠻廣的，再接再厲拿滿分！";
-            else feedback = "🎵 沒關係，再玩一次，多聽多認識這些好音樂！";
+            else feedback = "🎵 沒關係，多聽多認識這些好音樂！";
             
             document.getElementById('feedback-msg').innerText = feedback;
-            document.getElementById('music-box').innerHTML = "";
+            document.getElementById('music-box').innerHTML = ""; // 結束遊戲清空音樂
         }
 
         function restartGame() {
