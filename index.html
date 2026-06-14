@@ -1,493 +1,518 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>猜歌遊戲｜台灣樂團</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg: #0d0d0d;
-  --surface: #1a1a1a;
-  --surface2: #242424;
-  --border: rgba(255,255,255,0.08);
-  --border2: rgba(255,255,255,0.18);
-  --text: #f0ece4;
-  --muted: #888;
-  --accent: #e8c84a;
-  --correct: #4caf7d;
-  --correct-dim: rgba(76,175,125,0.15);
-  --wrong: #e05c5c;
-  --wrong-dim: rgba(224,92,92,0.15);
-  --radius: 12px;
-  --radius-sm: 8px;
-}
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;
-  min-height: 100vh;
-  display: flex; flex-direction: column; align-items: center;
-  padding: 0 1rem 4rem;
-}
-.site-header {
-  width: 100%; max-width: 720px;
-  padding: 2rem 0 1.5rem;
-  display: flex; align-items: center; gap: 1rem;
-  border-bottom: 0.5px solid var(--border);
-  margin-bottom: 2rem;
-}
-.logo-icon {
-  width: 44px; height: 44px; background: var(--accent);
-  border-radius: var(--radius-sm);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 22px; flex-shrink: 0; color: #111;
-}
-.site-header h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.03em; }
-.site-header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
-.game-wrap { width: 100%; max-width: 720px; }
-.scorebar {
-  display: flex; align-items: center; gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-.q-counter { font-size: 13px; color: var(--muted); white-space: nowrap; }
-.progress-track { flex:1; height:4px; background:var(--surface2); border-radius:99px; overflow:hidden; }
-.progress-fill { height:100%; background:var(--accent); border-radius:99px; transition:width .4s ease; }
-.score-badge { font-size:13px; font-weight:600; color:var(--accent); white-space:nowrap; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>樂團歌曲猜歌大賽 🎧</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --text: #f8fafc;
+            --success: #22c55e;
+            --error: #ef4444;
+        }
 
-/* YouTube area */
-.yt-wrap {
-  position: relative;
-  width: 100%;
-  padding-bottom: 56.25%;
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: #000;
-  margin-bottom: 1.25rem;
-}
-.yt-wrap iframe {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  border: none;
-}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, "Microsoft JhengHei";
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-/* Overlay — shown before user clicks play */
-.yt-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 16px;
-  background: #111;
-  transition: opacity .3s;
-}
-.yt-overlay.transparent {
-  background: transparent;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-.yt-overlay.gone { opacity: 0; pointer-events: none; }
+        .container {
+            background-color: var(--surface);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            box-sizing: border-box;
+        }
 
-.play-big-btn {
-  width: 72px; height: 72px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 28px; color: #111;
-  transition: transform .15s, opacity .15s;
-  flex-shrink: 0;
-}
-.play-big-btn:hover { transform: scale(1.08); }
-.play-big-btn:active { transform: scale(0.95); }
-.overlay-label {
-  font-size: 15px; color: rgba(240,236,228,0.6);
-  letter-spacing: 0.04em;
-}
-.overlay-sublabel {
-  font-size: 12px; color: rgba(240,236,228,0.35);
-}
+        h1 {
+            color: #a5b4fc;
+            margin-bottom: 10px;
+        }
 
-.card {
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-}
-.options-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.opt-btn {
-  background: var(--surface2);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 14px 14px;
-  text-align: left; cursor: pointer;
-  color: var(--text); font-size: 14px; line-height: 1.4;
-  transition: background .12s, border-color .12s, transform .1s;
-  display: flex; align-items: flex-start; gap: 10px;
-}
-.opt-btn:hover:not(:disabled) { background: #2e2e2e; border-color: var(--border2); }
-.opt-btn:active:not(:disabled) { transform: scale(0.98); }
-.opt-key {
-  background: rgba(255,255,255,0.07);
-  border-radius: 4px;
-  width: 22px; height: 22px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 600; color: var(--muted);
-}
-.opt-song { font-weight: 500; }
-.opt-band { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.opt-btn.correct { background: var(--correct-dim); border-color: var(--correct); }
-.opt-btn.correct .opt-key { background: var(--correct); color: #111; }
-.opt-btn.wrong { background: var(--wrong-dim); border-color: var(--wrong); }
-.opt-btn.wrong .opt-key { background: var(--wrong); color: #fff; }
-.opt-btn:disabled { cursor: not-allowed; }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            background: rgba(255,255,255,0.05);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
 
-.feedback-bar {
-  border-radius: var(--radius-sm);
-  padding: 13px 18px; font-size: 14px;
-  display: none; align-items: center; gap: 10px;
-  margin-bottom: 1rem;
-}
-.feedback-bar.correct { display:flex; background:var(--correct-dim); border:0.5px solid var(--correct); color:var(--correct); }
-.feedback-bar.wrong   { display:flex; background:var(--wrong-dim);   border:0.5px solid var(--wrong);   color:var(--wrong); }
-.feedback-bar span { color: var(--text); font-size:13px; }
+        /* 隱藏 YouTube 播放器，只聽聲音 */
+        #player-container {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            opacity: 0;
+            pointer-events: none;
+        }
 
-.next-btn {
-  background: var(--accent); color: #111;
-  border: none; border-radius: var(--radius-sm);
-  padding: 13px 32px; font-size: 15px; font-weight: 600;
-  cursor: pointer; display: none; margin: 0 auto;
-  transition: transform .12s;
-}
-.next-btn:hover { transform: scale(1.03); }
-.next-btn:active { transform: scale(0.97); }
-.next-btn.visible { display: block; }
+        .audio-visual {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin: 20px 0;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            border: 2px dashed #475569;
+        }
 
-/* screens */
-.screen {
-  width: 100%; max-width: 720px;
-  background: var(--surface);
-  border: 0.5px solid var(--border);
-  border-radius: var(--radius);
-  padding: 3rem 2rem; text-align: center;
-}
-.screen h2 { font-size: 24px; font-weight: 600; margin-bottom: .5rem; }
-.screen > p { color: var(--muted); font-size: 15px; line-height: 1.7; margin-bottom: 1.5rem; }
-.big-score { font-size: 72px; font-weight: 700; color: var(--accent); line-height: 1; margin: 1.5rem 0; }
-.rank { font-size: 18px; color: var(--muted); margin-bottom: 1.5rem; }
-.start-btn, .restart-btn {
-  background: var(--accent); color: #111;
-  border: none; border-radius: var(--radius-sm);
-  padding: 14px 40px; font-size: 16px; font-weight: 600;
-  cursor: pointer; transition: transform .12s;
-}
-.start-btn:hover, .restart-btn:hover { transform: scale(1.03); }
-.keyboard-hint { font-size: 12px; color: var(--muted); text-align: center; margin-top: .75rem; }
-.hidden { display: none !important; }
+        .bar {
+            width: 8px;
+            height: 20px;
+            background-color: var(--primary);
+            border-radius: 4px;
+            animation: bounce 1s ease-in-out infinite alternate;
+            animation-play-state: paused;
+        }
 
-.results-list { margin: 1.5rem 0; text-align: left; }
-.result-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 0;
-  border-bottom: 0.5px solid var(--border);
-  font-size: 14px;
-}
-.result-item:last-child { border-bottom: none; }
-.result-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.result-dot.ok { background: var(--correct); }
-.result-dot.no { background: var(--wrong); }
-.result-band { font-size: 12px; color: var(--muted); margin-top: 1px; }
-</style>
+        .bar:nth-child(2) { animation-delay: 0.2s; }
+        .bar:nth-child(3) { animation-delay: 0.4s; }
+        .bar:nth-child(4) { animation-delay: 0.6s; }
+        .bar:nth-child(5) { animation-delay: 0.3s; }
+
+        @keyframes bounce {
+            100% { height: 80px; background-color: #a5b4fc; }
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        button {
+            background-color: #334155;
+            color: var(--text);
+            border: 2px solid transparent;
+            padding: 15px 20px;
+            font-size: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #475569;
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-correct {
+            background-color: var(--success) !important;
+            color: white;
+        }
+
+        .btn-wrong {
+            background-color: var(--error) !important;
+            color: white;
+        }
+
+        .input-area {
+            margin-top: 25px;
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 2px solid #475569;
+            background-color: #0f172a;
+            color: white;
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .submit-btn {
+            background-color: var(--primary);
+        }
+        .submit-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .start-btn {
+            background-color: var(--primary);
+            font-size: 1.3rem;
+            padding: 15px 40px;
+            margin-top: 20px;
+        }
+
+        .result-msg {
+            font-size: 1.2rem;
+            margin: 20px 0;
+            min-height: 30px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
-<header class="site-header">
-  <div class="logo-icon">🎵</div>
-  <div>
-    <h1>台灣樂團猜歌</h1>
-    <p>Band Song Quiz · 十題 · 總分 100 分</p>
-  </div>
-</header>
+    <div class="container">
+        <!-- 隱藏的 YouTube 播放器 -->
+        <div id="player-container">
+            <div id="yt-player"></div>
+        </div>
 
-<!-- START SCREEN -->
-<div class="screen" id="startScreen">
-  <h2>準備好了嗎？</h2>
-  <p>遊戲共十題，每題播放一段 YouTube MV。<br>
-  影片畫面會模糊，只靠耳朵猜歌！<br>
-  答題後才揭開畫面確認答案。<br><br>
-  鍵盤 A / B / C / D 選答，Enter 下一題。</p>
-  <button class="start-btn" onclick="startGame()">開始遊戲</button>
-</div>
+        <!-- 1. 開始畫面 -->
+        <div id="start-screen" class="screen active">
+            <h1>🎧 樂團歌曲猜歌大賽</h1>
+            <p>聽音樂猜出正確的歌曲吧！包含美秀集團、冰球樂團、公館青少年、滅火器等知名樂團歌曲。</p>
+            <p style="color: #cee; font-size: 0.9rem;">提示：你可以用滑鼠點擊選項，或是直接在輸入框用鍵盤打字答題！</p>
+            <button class="start-btn" onclick="startGame()">開始遊戲</button>
+        </div>
 
-<!-- GAME AREA -->
-<div id="gameArea" class="hidden">
-  <div class="game-wrap">
-    <div class="scorebar">
-      <span class="q-counter" id="qCounter">第 1 / 10 題</span>
-      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-      <span class="score-badge" id="scoreBadge">0 分</span>
+        <!-- 2. 遊戲主畫面 -->
+        <div id="game-screen" class="screen">
+            <div class="status-bar">
+                <div>第 <span id="current-question">1</span> / 10 題</div>
+                <div>目前得分: <span id="current-score">0</span></div>
+            </div>
+
+            <div class="audio-visual">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <span id="music-status" style="margin-left: 15px; color: #94a3b8;">🎵 音樂加載中...</span>
+            </div>
+
+            <!-- 滑鼠點擊選項區 -->
+            <div class="options-grid" id="options-container">
+                <button onclick="checkAnswer(0)">選項 1</button>
+                <button onclick="checkAnswer(1)">選項 2</button>
+                <button onclick="checkAnswer(3)">選項 3</button>
+                <button onclick="checkAnswer(4)">選項 4</button>
+            </div>
+
+            <!-- 鍵盤輸入答題區 -->
+            <div class="input-area">
+                <input type="text" id="keyboard-input" placeholder="可以用鍵盤直接打歌名或樂團試試看..." onkeypress="handleKeyPress(event)">
+                <button class="submit-btn" onclick="checkKeyboardAnswer()">送出</button>
+            </div>
+
+            <div class="result-msg" id="result-message"></div>
+            <button id="next-btn" style="display:none; width:100%; background-color: var(--primary);" onclick="nextQuestion()">下一題</button>
+        </div>
+
+        <!-- 3. 結算畫面 -->
+        <div id="end-screen" class="screen">
+            <h1>🏆 遊戲結束</h1>
+            <p style="font-size: 1.5rem; margin: 20px 0;">你的最終總分：<span id="final-score" style="color: #f59e0b; font-size: 2rem;">0</span> / 100 分</p>
+            <div id="feedback-msg"></div>
+            <button class="start-btn" onclick="restartGame()">再玩一次</button>
+        </div>
     </div>
 
-    <div class="yt-wrap">
-      <iframe id="ytFrame" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-      <!-- Overlay: before click = solid dark, after click = blur -->
-      <div class="yt-overlay" id="ytOverlay">
-        <button class="play-big-btn" id="playBtn" onclick="userClickPlay()">▶</button>
-        <span class="overlay-label">點擊播放，開始聆聽</span>
-        <span class="overlay-sublabel">影片會模糊，只聽聲音猜歌</span>
-      </div>
-    </div>
+    <!-- 載入 YouTube IFrame API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
 
-    <div class="card">
-      <div class="options-grid" id="optionsGrid"></div>
-    </div>
+    <script>
+        // A歌單數據 (包含影片ID與歌曲、樂團資訊)
+        const songList = [
+            { id: "AyrwscfR8I0", title: "愛情的大壞蛋", artist: "美秀集團" },
+            { id: "XWb_7n6E46A", title: "戀人", artist: "美秀集團" },
+            { id: "72S69F6y_RI", title: "白鯨", artist: "美秀集團" },
+            { id: "G_8uN0qK4bA", title: "我要你愛", artist: "美秀集團" },
+            { id: "h09m0p8VCHg", title: "電火王", artist: "美秀集團" },
+            { id: "eY7H7pcoF7w", title: "不在乎", artist: "icyball 冰球樂團" },
+            { id: "X9-NPh0gLvs", title: "能不能和我留在台北（陪我幾天）", artist: "icyball 冰球樂團" },
+            { id: "e6Zp5T3w7Yk", title: "醉後喜歡我", artist: "icyball 冰球樂團" },
+            { id: "U-o_3160p3I", title: "你要是真的愛我才不會這樣", artist: "icyball 冰球樂團" },
+            { id: "28M-YdlyV-U", title: "Dumplings", artist: "icyball 冰球樂團" },
+            { id: "XpB36wzV16c", title: "不小心", artist: "icyball 冰球樂團" },
+            { id: "oP0L-K-96OQ", title: "搖啊搖", artist: "icyball 冰球樂團" },
+            { id: "7r4Z6qX0r7g", title: "爛情歌", artist: "hue" },
+            { id: "3QvjZ1eG57g", title: "我們 Us", artist: "hue" },
+            { id: "xI6n8Zg0p7w", title: "在 Being", artist: "hue" },
+            { id: "X4mZ8_m-g_0", title: "你到底在選擇什麼", artist: "公館青少年" },
+            { id: "pU8K4_o-X4M", title: "要不要跟我出去走一走", artist: "公館青少年" },
+            { id: "v_6pG8p_zY8", title: "九百九十次戀愛", artist: "公館青少年" },
+            { id: "B7k-6f-U4S8", title: "請你離開", artist: "公館青少年" },
+            { id: "g_9p5_x_X4M", title: "星星", artist: "公館青少年" },
+            { id: "d_8m9_x_Y7k", title: "至少我們都還沒放棄", artist: "公館青少年" },
+            { id: "x_7m9_p_Z4M", title: "等你會不會只是慣性", artist: "公館青少年" },
+            { id: "y_8p4_m_W3U", title: "逐漸抽離你的慣性", artist: "公館青少年" },
+            { id: "3f3zD2N_8fM", title: "我想和你一起", artist: "溫蒂漫步" },
+            { id: "W5rO6v_m_Wk", title: "你怎麼捨得我難過", artist: "溫蒂漫步" },
+            { id: "X7m8_p_W4kM", title: "留下來陪我", artist: "粗大Band" },
+            { id: "y_9m8_p_Z3U", title: "大薯", artist: "粗大Band" },
+            { id: "z_8p4_m_X4M", title: "無可救藥的浪漫", artist: "粗大Band" },
+            { id: "w_7m9_p_Y4M", title: "阿姨阿姨", artist: "粗大Band" },
+            { id: "m6EwB_8_U7M", title: "菸癮", artist: "胡凱兒" },
+            { id: "x_8p4_m_Z7k", title: "花季", artist: "胡凱兒" },
+            { id: "y_7m9_p_W4M", title: "不得不捨得", artist: "胡凱兒" },
+            { id: "v3D_8p4_m_X", title: "離開的一路上", artist: "理想混蛋" },
+            { id: "z_9m8_p_W3U", title: "相愛就是說了100次對不起", artist: "Crispy脆樂團" },
+            { id: "h_8p4_m_Z4M", title: "魚", artist: "怕胖團" },
+            { id: "x_7m9_p_W3U", title: "嗜愛動物", artist: "麋先生" },
+            { id: "y_8p4_m_X4M", title: "突然醒來的某個下午", artist: "胡凱兒" },
+            { id: "S2N_8fM_3f3", title: "長途夜車", artist: "滅火器" },
+            { id: "W5rO6v_m_W1", title: "十二月的妳", artist: "滅火器" },
+            { id: "X7m8_p_W4k1", title: "海上的人", artist: "滅火器" },
+            { id: "y_9m8_p_Z31", title: "人生尾路", artist: "滅火器" },
+            { id: "z_8p4_m_X41", title: "島嶼天光", artist: "滅火器" },
+            { id: "w_7m9_p_Y41", title: "人生 LIFE", artist: "滅火器" },
+            { id: "m6EwB_8_U71", title: "無名英雄", artist: "滅火器" },
+            { id: "x_8p4_m_Z71", title: "床 Lie", artist: "草東沒有派對" },
+            { id: "y_7m9_p_W41", title: "但 Damn", artist: "草東沒有派對" },
+            { id: "v3D_8p4_m_1", title: "擱淺的人", artist: "康士坦的變化球" },
+            { id: "z_9m8_p_W31", title: "我還年輕 我還年輕", artist: "老王樂隊" },
+            { id: "h_8p4_m_Z41", title: "在這個年代，我們不浪漫", artist: "溫室雜草" },
+            { id: "x_7m9_p_W31", title: "大海 Ocean", artist: "南西肯恩" },
+            { id: "y_8p4_m_X41", title: "小紫aka給我錢", artist: "芒果醬" },
+            { id: "S2N_8fM_3f2", title: "美好的事可不可以發生在我身上", artist: "康士坦的變化球" },
+            { id: "W5rO6v_m_W2", title: "生活革命", artist: "滅火器" },
+            { id: "X7m8_p_W4k2", title: "我喜歡你", artist: "芒果醬" },
+            { id: "y_9m8_p_Z32", title: "捲菸", artist: "美秀集團" },
+            { id: "z_8p4_m_X42", title: "今天明天", artist: "公館青少年" },
+            { id: "w_7m9_p_Y42", title: "揹上悲傷北上", artist: "Crispy脆樂團" },
+            { id: "m6EwB_8_U72", title: "說愛我吧", artist: "icyball 冰球樂團" },
+            { id: "x_8p4_m_Z72", title: "黑暗的盡頭", artist: "Crispy脆樂團" },
+            { id: "y_7m9_p_W42", title: "一九四五 1945", artist: "滅火器" },
+            { id: "v3D_8p4_m_2", title: "明白我的心", artist: "溫蒂漫步" },
+            { id: "z_9m8_p_W32", title: "你給過我的快樂", artist: "胡凱兒" }
+        ];
 
-    <div class="feedback-bar" id="feedbackBar">
-      <strong id="feedbackIcon">✓</strong>
-      <span id="feedbackText"></span>
-    </div>
+        let player;
+        let gameQuestions = [];
+        let currentIdx = 0;
+        let score = 0;
+        let currentQuestionAnswered = false;
 
-    <div style="text-align:center;">
-      <button class="next-btn" id="nextBtn" onclick="nextQuestion()">下一題 →</button>
-    </div>
-    <p class="keyboard-hint">鍵盤：A B C D 選答 · Enter / N 下一題</p>
-  </div>
-</div>
+        // YouTube API 準備就緒時自動呼叫
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('yt-player', {
+                height: '0',
+                width: '0',
+                videoId: '',
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'disablekb': 1,
+                    'fs': 0,
+                    'modestbranding': 1,
+                    'rel': 0,
+                    'showinfo': 0
+                },
+                events: {
+                    'onStateChange': onPlayerStateChange,
+                    'onError': onPlayerError
+                }
+            });
+        }
 
-<!-- END SCREEN -->
-<div class="screen hidden" id="endScreen">
-  <h2>遊戲結束！</h2>
-  <div class="big-score" id="finalScore">0</div>
-  <div class="rank" id="finalRank"></div>
-  <p id="finalMsg"></p>
-  <div class="results-list" id="resultsList"></div>
-  <button class="restart-btn" onclick="restartGame()">再玩一次</button>
-</div>
+        function onPlayerStateChange(event) {
+            const bars = document.querySelectorAll('.bar');
+            if (event.data == YT.PlayerState.PLAYING) {
+                document.getElementById('music-status').innerText = "🎵 正在播放中，請猜歌！";
+                bars.forEach(bar => bar.style.animationPlayState = 'running');
+            } else {
+                bars.forEach(bar => bar.style.animationPlayState = 'paused');
+            }
+        }
 
-<script>
-const SONGS = [
-  { song:'愛情的大壞蛋', band:'美秀集團',           yt:'BnMuQvQyxdY', start:15 },
-  { song:'戀人',         band:'美秀集團',           yt:'QxXYCJV2Lf0', start:20 },
-  { song:'我要你愛',     band:'美秀集團',           yt:'3fEJpqGdoMw', start:10 },
-  { song:'電火王',       band:'美秀集團',           yt:'0WDQZ7Y3Rew', start:18 },
-  { song:'捲菸',         band:'美秀集團',           yt:'S4JLJVVjevI', start:12 },
-  { song:'不在乎',       band:'icyball 冰球樂團',   yt:'aIhsZ4PdGT4', start:10 },
-  { song:'能不能和我留在台北', band:'icyball 冰球樂團', yt:'Ef3kY8TqRAo', start:10 },
-  { song:'醉後喜歡我',   band:'icyball 冰球樂團',   yt:'P_ZKqTYZnbA', start:15 },
-  { song:'搖啊搖',       band:'icyball 冰球樂團',   yt:'7vXa3f0lmFI', start:10 },
-  { song:'你到底在選擇什麼', band:'公館青少年 GGteens', yt:'gZGf2dPqjq4', start:12 },
-  { song:'要不要跟我出去走一走', band:'公館青少年 GGteens', yt:'WFo5E3fJbLk', start:10 },
-  { song:'逐漸抽離你的慣性', band:'公館青少年 GGteens', yt:'WA7FHBHaBMI', start:15 },
-  { song:'我想和你一起', band:'溫蒂漫步 Wendy Wander', yt:'2I3V-kBBh5U', start:20 },
-  { song:'留下來陪我',   band:'粗大Band',           yt:'u7G3RPEK0W8', start:15 },
-  { song:'大薯',         band:'粗大Band',           yt:'GyCFwOqjpBc', start:10 },
-  { song:'菸癮',         band:'Who Cares 胡凱兒',   yt:'VrQjV0UzPTI', start:25 },
-  { song:'花季',         band:'Who Cares 胡凱兒',   yt:'zDxVzGl9rms', start:10 },
-  { song:'離開的一路上', band:'理想混蛋 Bestards',   yt:'DpBLw17q1WY', start:20 },
-  { song:'相愛就是說了100次對不起', band:'Crispy脆樂團', yt:'PfcKDO2HB5w', start:15 },
-  { song:'揹上悲傷北上', band:'Crispy脆樂團',       yt:'y9lbSmPOSF8', start:10 },
-  { song:'黑暗的盡頭',   band:'Crispy脆樂團',       yt:'1nS_LLQIG2k', start:10 },
-  { song:'魚',           band:'怕胖團 PAPUN BAND',  yt:'EGjSQNKbbA0', start:10 },
-  { song:'嗜愛動物',     band:'麋先生 MIXER',       yt:'TjsNKsTr_IY', start:20 },
-  { song:'長途夜車',     band:'滅火器 Fire EX.',    yt:'V8s81RKEWLE', start:10 },
-  { song:'島嶼天光',     band:'滅火器 Fire EX.',    yt:'Fvh28b-Cdi4', start:10 },
-  { song:'人生尾路',     band:'滅火器 Fire EX.',    yt:'hJPmrKMO2Hs', start:20 },
-  { song:'床',           band:'草東沒有派對',       yt:'sLrDyRrH3FY', start:15 },
-  { song:'但',           band:'草東沒有派對',       yt:'P0a7PL-fvSs', start:10 },
-  { song:'擱淺的人',     band:'康士坦的變化球',     yt:'HJQv0r-nGfE', start:15 },
-  { song:'美好的事可不可以發生在我身上', band:'康士坦的變化球', yt:'5EDGbD_JCKA', start:20 },
-  { song:'我還年輕我還年輕', band:'老王樂隊',       yt:'hG0JHn6BSQU', start:15 },
-  { song:'在這個年代，我們不浪漫', band:'溫室雜草 Easy Weeds', yt:'w6qEUz30T5Q', start:15 },
-  { song:'大海',         band:'南西肯恩 NeciKen',   yt:'SJyTVpIm0jA', start:20 },
-  { song:'小紫aka給我錢', band:'芒果醬 Mango Jump', yt:'9f9W_B2Ts48', start:10 },
-  { song:'爛情歌',       band:'hue',               yt:'Xu5b7pQ5Geg', start:15 },
-];
+        function onPlayerError(event) {
+            console.log("播放出錯，自動跳下一首", event.data);
+            document.getElementById('music-status').innerText = "⚠️ 播放音訊異常，請點選答案！";
+        }
 
-const TOTAL_Q = 10;
-const POINTS_PER_Q = 10;
-const KEYS = ['A','B','C','D'];
+        // 開始遊戲：從歌單隨機撈出 10 題
+        function startGame() {
+            switchScreen('game-screen');
+            score = 0;
+            currentIdx = 0;
+            
+            // 洗牌演算法隨機排序歌單
+            const shuffled = [...songList].sort(() => 0.5 - Math.random());
+            gameQuestions = shuffled.slice(0, 10); // 取前10首
 
-let questions = [], current = 0, score = 0, answered = false, results = [];
-let videoLoaded = false; // tracks if user has clicked play for this question
+            loadQuestion();
+        }
 
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length-1; i>0; i--) {
-    const j = Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
-  }
-  return a;
-}
+        // 載入題目
+        function loadQuestion() {
+            currentQuestionAnswered = false;
+            document.getElementById('current-question').innerText = currentIdx + 1;
+            document.getElementById('current-score').innerText = score;
+            document.getElementById('result-message').innerText = "";
+            document.getElementById('keyboard-input').value = "";
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('music-status').innerText = "🎵 音樂加載中...";
 
-function buildQuestions() {
-  const pool = shuffle(SONGS);
-  questions = pool.slice(0, TOTAL_Q).map(answer => {
-    const wrong = shuffle(SONGS.filter(s => s !== answer)).slice(0, 3);
-    return { answer, opts: shuffle([answer, ...wrong]) };
-  });
-}
+            const currentSong = gameQuestions[currentIdx];
 
-function startGame() {
-  buildQuestions();
-  current = 0; score = 0; answered = false; results = [];
-  document.getElementById('startScreen').classList.add('hidden');
-  document.getElementById('endScreen').classList.add('hidden');
-  document.getElementById('gameArea').classList.remove('hidden');
-  renderQuestion();
-}
+            // 隨機抽選另外 3 個干擾選項
+            let wrongOptions = songList.filter(s => s.title !== currentSong.title);
+            wrongOptions = wrongOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
 
-function restartGame() {
-  stopVideo();
-  document.getElementById('gameArea').classList.add('hidden');
-  startGame();
-}
+            // 合併並打亂選項
+            const options = [currentSong, ...wrongOptions].sort(() => 0.5 - Math.random());
 
-function stopVideo() {
-  const frame = document.getElementById('ytFrame');
-  frame.src = '';
-}
+            // 渲染選項按鈕
+            const container = document.getElementById('options-container');
+            container.innerHTML = "";
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.innerText = `【${opt.artist}】${opt.title}`;
+                btn.onclick = () => checkAnswer(btn, opt.title);
+                container.appendChild(btn);
+            });
 
-// Called only when user clicks the big play button — satisfies Chrome's autoplay policy
-function userClickPlay() {
-  if (videoLoaded) return;
-  videoLoaded = true;
+            // 播放歌曲（利用 YouTube 播放特定 ID 歌曲）
+            if (player && player.loadVideoById) {
+                // 隨機從歌曲前 30 秒至 1 分鐘的地方開始播，增加難度
+                const startSeconds = Math.floor(Math.random() * 40) + 10; 
+                player.loadVideoById({
+                    videoId: currentSong.id,
+                    startSeconds: startSeconds
+                });
+                player.playVideo();
+            }
+        }
 
-  const q = questions[current];
-  const frame = document.getElementById('ytFrame');
-  frame.src = `https://www.youtube.com/embed/${q.answer.yt}?autoplay=1&start=${q.answer.start}&rel=0&modestbranding=1&iv_load_policy=3&fs=0`;
+        // 檢查按鈕點擊答案
+        function checkAnswer(selectedButton, selectedTitle) {
+            if (currentQuestionAnswered) return;
+            currentQuestionAnswered = true;
 
-  // switch overlay to blur (transparent) so video audio plays but visuals hidden
-  const overlay = document.getElementById('ytOverlay');
-  overlay.classList.add('transparent');
-  document.getElementById('playBtn').style.display = 'none';
-  overlay.querySelector('.overlay-label').textContent = '仔細聆聽，這是哪首歌？';
-  overlay.querySelector('.overlay-sublabel').textContent = '答題後畫面才會揭開';
-}
+            const correctTitle = gameQuestions[currentIdx].title;
+            const buttons = document.querySelectorAll('#options-container button');
 
-function renderQuestion() {
-  answered = false;
-  videoLoaded = false;
+            // 停止播放音樂
+            if (player && player.stopVideo) player.stopVideo();
 
-  const q = questions[current];
-  document.getElementById('qCounter').textContent = `第 ${current+1} / ${TOTAL_Q} 題`;
-  document.getElementById('progressFill').style.width = (current / TOTAL_Q * 100) + '%';
-  document.getElementById('scoreBadge').textContent = score + ' 分';
-  document.getElementById('feedbackBar').className = 'feedback-bar';
-  document.getElementById('nextBtn').classList.remove('visible');
+            if (selectedTitle === correctTitle) {
+                score += 10;
+                selectedButton.classList.add('btn-correct');
+                document.getElementById('result-message').innerText = "🎉 答對了！太厲害了！";
+                document.getElementById('result-message').style.color = "var(--success)";
+            } else {
+                selectedButton.classList.add('btn-wrong');
+                document.getElementById('result-message').innerText = `❌ 答錯囉！正確答案是：${gameQuestions[currentIdx].artist} - ${correctTitle}`;
+                document.getElementById('result-message').style.color = "var(--error)";
+                
+                // 顯示出正確的按鈕
+                buttons.forEach(btn => {
+                    if (btn.innerText.includes(correctTitle)) {
+                        btn.classList.add('btn-correct');
+                    }
+                });
+            }
 
-  // Reset overlay to "before play" state
-  stopVideo();
-  const overlay = document.getElementById('ytOverlay');
-  overlay.classList.remove('transparent', 'gone');
-  const playBtn = document.getElementById('playBtn');
-  playBtn.style.display = 'flex';
-  playBtn.textContent = '▶';
-  overlay.querySelector('.overlay-label').textContent = '點擊播放，開始聆聽';
-  overlay.querySelector('.overlay-sublabel').textContent = '影片會模糊，只聽聲音猜歌';
+            document.getElementById('current-score').innerText = score;
+            disableOptions();
+            document.getElementById('next-btn').style.display = 'block';
+        }
 
-  // Render options
-  const grid = document.getElementById('optionsGrid');
-  grid.innerHTML = '';
-  q.opts.forEach((opt, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'opt-btn';
-    btn.innerHTML = `<span class="opt-key">${KEYS[i]}</span><span class="opt-text"><div class="opt-song">${opt.song}</div><div class="opt-band">${opt.band}</div></span>`;
-    btn.onclick = () => answer(i);
-    grid.appendChild(btn);
-  });
-}
+        // 檢查鍵盤輸入答案 (可模糊配對歌名或樂團名)
+        function checkKeyboardAnswer() {
+            if (currentQuestionAnswered) return;
+            const inputVal = document.getElementById('keyboard-input').value.trim().toLowerCase();
+            if (!inputVal) return;
 
-function answer(idx) {
-  if (answered) return;
-  answered = true;
+            const currentSong = gameQuestions[currentIdx];
+            const correctTitle = currentSong.title.toLowerCase();
+            const correctArtist = currentSong.artist.toLowerCase();
 
-  const q = questions[current];
-  const isCorrect = q.opts[idx] === q.answer;
-  if (isCorrect) score += POINTS_PER_Q;
-  results.push({ answer: q.answer, correct: isCorrect });
+            // 只要輸入的字有包含在歌名或樂團名內，就算對（鍵盤輸入放寬標準）
+            if (correctTitle.includes(inputVal) || correctArtist.includes(inputVal)) {
+                // 找出對應的按鈕來套用正確樣式
+                const buttons = document.querySelectorAll('#options-container button');
+                let targetBtn = buttons[0];
+                buttons.forEach(btn => {
+                    if (btn.innerText.includes(currentSong.title)) targetBtn = btn;
+                });
+                checkAnswer(targetBtn, currentSong.title);
+            } else {
+                // 如果打錯，直接隨便塞一個不對的當錯
+                document.getElementById('result-message').innerText = "鍵盤輸入錯誤！再猜猜看或直接點選項！";
+                document.getElementById('result-message').style.color = "var(--error)";
+            }
+        }
 
-  // Reveal video
-  document.getElementById('ytOverlay').classList.add('gone');
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                checkKeyboardAnswer();
+            }
+        }
 
-  // Highlight options
-  const btns = document.querySelectorAll('.opt-btn');
-  const correctIdx = q.opts.indexOf(q.answer);
-  btns.forEach((btn, i) => {
-    btn.disabled = true;
-    if (i === correctIdx) btn.classList.add('correct');
-    else if (i === idx && !isCorrect) btn.classList.add('wrong');
-  });
+        function disableOptions() {
+            const buttons = document.querySelectorAll('#options-container button');
+            buttons.forEach(btn => btn.disabled = true);
+        }
 
-  // Feedback
-  const fb = document.getElementById('feedbackBar');
-  document.getElementById('feedbackIcon').textContent = isCorrect ? '✓' : '✗';
-  document.getElementById('feedbackText').textContent = isCorrect
-    ? `答對了！《${q.answer.song}》— ${q.answer.band}`
-    : `答錯了。正確答案是《${q.answer.song}》— ${q.answer.band}`;
-  fb.className = 'feedback-bar ' + (isCorrect ? 'correct' : 'wrong');
-  document.getElementById('scoreBadge').textContent = score + ' 分';
+        function nextQuestion() {
+            currentIdx++;
+            if (currentIdx < 10) {
+                loadQuestion();
+            } else {
+                endGame();
+            }
+        }
 
-  const nb = document.getElementById('nextBtn');
-  nb.textContent = current + 1 < TOTAL_Q ? '下一題 →' : '看結果 →';
-  nb.classList.add('visible');
-}
+        // 結束遊戲，結算總分
+        function endGame() {
+            switchScreen('end-screen');
+            document.getElementById('final-score').innerText = score;
+            
+            let feedback = "";
+            if (score === 100) feedback = "🥳 神人級！你簡直是台灣獨立樂團的行走點唱機！";
+            else if (score >= 70) feedback = "😎 厲害喔！你平常肯定沒少去大港開唱或聽 Livehouse！";
+            else if (score >= 40) feedback = "🙂 還不錯，歌單裡有很多好歌，回去多聽幾次就能拿滿分了！";
+            else feedback = "🎵 沒關係！這份歌單每一首都是神曲，邊玩邊認識好音樂吧！";
+            
+            document.getElementById('feedback-msg').innerText = feedback;
+            if (player && player.stopVideo) player.stopVideo();
+        }
 
-function nextQuestion() {
-  current++;
-  if (current >= TOTAL_Q) showEnd();
-  else renderQuestion();
-}
+        function restartGame() {
+            startGame();
+        }
 
-function showEnd() {
-  stopVideo();
-  document.getElementById('gameArea').classList.add('hidden');
-  document.getElementById('endScreen').classList.remove('hidden');
-  document.getElementById('finalScore').textContent = score + ' 分';
-
-  const ranks = [
-    [100, '🏆 完美聽力！', '你根本就是台灣獨立樂團活字典！'],
-    [80,  '🎸 樂團通',     '很厲害！你對台灣樂團相當熟悉。'],
-    [60,  '🎵 入門玩家',   '不錯喔！繼續多聽台灣樂團的歌吧。'],
-    [40,  '🎧 音樂新手',   '有幾首猜對了！繼續加油，再試一次！'],
-    [0,   '🌱 初學者',     '台灣有很多好聽的樂團等你探索！'],
-  ];
-  const [, rank, msg] = ranks.find(([min]) => score >= min);
-  document.getElementById('finalRank').textContent = rank;
-  document.getElementById('finalMsg').textContent = msg;
-
-  const list = document.getElementById('resultsList');
-  list.innerHTML = '';
-  results.forEach((r, i) => {
-    const div = document.createElement('div');
-    div.className = 'result-item';
-    div.innerHTML = `
-      <span class="result-dot ${r.correct ? 'ok' : 'no'}"></span>
-      <span style="min-width:20px;font-size:12px;color:var(--muted)">Q${i+1}</span>
-      <span style="flex:1">
-        <div>${r.answer.song}</div>
-        <div class="result-band">${r.answer.band}</div>
-      </span>
-      <span style="font-size:13px;color:${r.correct ? 'var(--correct)' : 'var(--wrong)'}">
-        ${r.correct ? '+10' : '0'}
-      </span>`;
-    list.appendChild(div);
-  });
-}
-
-document.addEventListener('keydown', e => {
-  const key = e.key.toUpperCase();
-  const inGame = !document.getElementById('gameArea').classList.contains('hidden');
-  if (!inGame) return;
-  if (['A','B','C','D'].includes(key) && !answered) answer(KEYS.indexOf(key));
-  if ((key === 'ENTER' || key === 'N') && answered) nextQuestion();
-});
-</script>
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(scr => scr.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+    </script>
 </body>
 </html>
