@@ -3,701 +3,841 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>我的歌單 × 隨機播放</title>
+<title>猜歌遊戲 🎵</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600&family=DM+Serif+Display:ital@0;1&family=Space+Mono:wght@400;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Space+Grotesk:wght@400;600;700&display=swap');
 
   :root {
-    --bg: #0a0a0f;
-    --surface: #111118;
-    --card: #16161f;
-    --border: rgba(255,255,255,0.06);
-    --accent: #c8a96e;
-    --accent2: #7b9cce;
-    --text: #e8e4dc;
-    --muted: #6b6870;
-    --highlight: rgba(200,169,110,0.12);
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --accent-a: #ff6b35;
+    --accent-b: #a855f7;
+    --accent-c: #22d3a5;
+    --text: #f0f0f5;
+    --text-dim: #8888a0;
+    --correct: #22d3a5;
+    --wrong: #ff4d6d;
+    --radius: 14px;
   }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { scroll-behavior: smooth; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Noto Serif TC', serif;
+    font-family: 'Noto Sans TC', sans-serif;
     min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ── Grain overlay ── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 999;
-    opacity: .45;
-  }
-
-  /* ── Now Playing banner ── */
-  #now-playing-bar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    background: rgba(10,10,15,0.9);
-    backdrop-filter: blur(18px);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 32px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    transition: transform 0.4s cubic-bezier(.16,1,.3,1);
-  }
-
-  .np-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--accent);
-    flex-shrink: 0;
-    animation: pulse-dot 1.6s ease-in-out infinite;
-  }
-  @keyframes pulse-dot {
-    0%,100% { opacity: 1; transform: scale(1); }
-    50%      { opacity: .4; transform: scale(.7); }
-  }
-
-  .np-label {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    letter-spacing: .18em;
-    color: var(--accent);
-    text-transform: uppercase;
-    flex-shrink: 0;
-  }
-  .np-title {
-    font-family: 'Noto Serif TC', serif;
-    font-size: 13px;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: 1;
-  }
-  .np-artist {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    flex-shrink: 0;
-  }
-
-  /* ── Player modal ── */
-  #player-wrap {
-    position: fixed;
-    bottom: 28px; right: 28px;
-    z-index: 200;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: 12px;
-  }
-
-  #yt-frame {
-    width: 320px;
-    height: 180px;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 24px 64px rgba(0,0,0,.7), 0 0 0 1px var(--border);
-    opacity: 0;
-    transform: translateY(20px) scale(0.96);
-    transition: opacity .5s ease, transform .5s cubic-bezier(.16,1,.3,1);
-    pointer-events: none;
-  }
-  #yt-frame.visible {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    pointer-events: all;
-  }
-  #yt-frame iframe {
-    width: 100%; height: 100%;
-    border: none;
-    display: block;
-  }
-
-  #player-controls {
-    display: flex;
-    gap: 8px;
     align-items: center;
+    justify-content: flex-start;
+    padding: 24px 16px 60px;
   }
 
-  .ctrl-btn {
-    background: var(--card);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    letter-spacing: .08em;
-    cursor: pointer;
-    transition: background .2s, color .2s, border-color .2s;
-  }
-  .ctrl-btn:hover {
-    background: var(--highlight);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  .ctrl-btn.primary {
-    background: var(--accent);
-    color: #0a0a0f;
-    border-color: var(--accent);
-    font-weight: 700;
-  }
-  .ctrl-btn.primary:hover {
-    background: #d9bc84;
-    border-color: #d9bc84;
-    color: #0a0a0f;
-  }
-
-  /* ── Main layout ── */
-  .page-wrap {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 110px 32px 120px;
-  }
-
-  /* ── Header ── */
-  .site-header {
-    margin-bottom: 64px;
-  }
-  .eyebrow {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    letter-spacing: .22em;
-    color: var(--accent);
+  /* ── HEADER ── */
+  .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 4px;
     text-transform: uppercase;
-    margin-bottom: 16px;
-    opacity: 0;
-    animation: fadeUp .6s .1s forwards;
+    color: var(--text-dim);
+    margin-bottom: 6px;
   }
-  .site-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: clamp(2.8rem, 6vw, 5.2rem);
-    line-height: 1.05;
-    letter-spacing: -.02em;
-    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 60%, var(--accent2) 100%);
+  h1 {
+    font-size: clamp(32px, 6vw, 52px);
+    font-weight: 900;
+    text-align: center;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 30%, var(--text-dim));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    opacity: 0;
-    animation: fadeUp .7s .2s forwards;
+    margin-bottom: 32px;
   }
-  .site-sub {
-    margin-top: 18px;
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.7;
-    max-width: 440px;
-    opacity: 0;
-    animation: fadeUp .7s .35s forwards;
+
+  /* ── SELECT SCREEN ── */
+  #select-screen { width: 100%; max-width: 480px; }
+  .select-title {
+    text-align: center;
+    font-size: 15px;
+    color: var(--text-dim);
+    margin-bottom: 28px;
+    letter-spacing: 1px;
   }
-  .stat-row {
-    display: flex;
-    gap: 32px;
-    margin-top: 28px;
-    opacity: 0;
-    animation: fadeUp .7s .45s forwards;
-  }
-  .stat {
+  .playlist-cards {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 14px;
   }
-  .stat-num {
-    font-family: 'DM Serif Display', serif;
-    font-size: 2rem;
-    color: var(--accent);
-    line-height: 1;
-  }
-  .stat-label {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    letter-spacing: .14em;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ── Shuffle hero btn ── */
-  .shuffle-hero {
-    margin-bottom: 52px;
-    opacity: 0;
-    animation: fadeUp .7s .55s forwards;
-  }
-  #shuffle-btn {
-    background: transparent;
-    border: 1.5px solid var(--accent);
-    color: var(--accent);
-    font-family: 'Space Mono', monospace;
-    font-size: 13px;
-    letter-spacing: .15em;
-    text-transform: uppercase;
-    padding: 14px 36px;
-    border-radius: 4px;
+  .playlist-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
     cursor: pointer;
+    transition: all 0.2s;
     position: relative;
     overflow: hidden;
-    transition: color .3s;
   }
-  #shuffle-btn::before {
+  .playlist-card::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--accent);
-    transform: translateX(-101%);
-    transition: transform .35s cubic-bezier(.16,1,.3,1);
-  }
-  #shuffle-btn:hover::before { transform: translateX(0); }
-  #shuffle-btn:hover { color: #0a0a0f; }
-  #shuffle-btn span { position: relative; z-index: 1; }
-
-  /* ── Artist sections ── */
-  .artist-section {
-    margin-bottom: 48px;
     opacity: 0;
-    animation: fadeUp .6s forwards;
+    transition: opacity 0.2s;
   }
-
-  .artist-header {
-    display: flex;
-    align-items: baseline;
-    gap: 14px;
-    margin-bottom: 6px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--border);
-  }
-  .artist-name {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.35rem;
-    color: var(--text);
-  }
-  .artist-name-en {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: .1em;
-  }
-  .artist-count {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    color: var(--accent);
-    margin-left: auto;
-    letter-spacing: .12em;
-  }
-
-  /* ── Track list ── */
-  .track-list { list-style: none; }
-  .track-item {
+  .playlist-card.card-a::before { background: linear-gradient(135deg, var(--accent-a)15, transparent); }
+  .playlist-card.card-b::before { background: linear-gradient(135deg, var(--accent-b)15, transparent); }
+  .playlist-card.card-c::before { background: linear-gradient(135deg, var(--accent-c)15, transparent); }
+  .playlist-card:hover { transform: translateY(-2px); border-color: #444; }
+  .playlist-card:hover::before { opacity: 1; }
+  .card-letter {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    width: 52px;
+    height: 52px;
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 10px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background .2s;
-    position: relative;
-  }
-  .track-item:hover { background: var(--highlight); }
-  .track-item.active {
-    background: var(--highlight);
-  }
-  .track-item.active .track-title { color: var(--accent); }
-
-  .track-num {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    width: 22px;
-    text-align: right;
-    flex-shrink: 0;
-  }
-  .track-item.active .track-num { display: none; }
-  .track-playing-icon {
-    display: none;
-    width: 22px;
-    flex-shrink: 0;
     justify-content: center;
-  }
-  .track-item.active .track-playing-icon { display: flex; }
-
-  .bar {
-    width: 3px;
-    border-radius: 2px;
-    background: var(--accent);
-    animation: eq 0.9s ease-in-out infinite;
-  }
-  .bar:nth-child(1) { height: 10px; animation-delay: 0s; }
-  .bar:nth-child(2) { height: 14px; animation-delay: .15s; }
-  .bar:nth-child(3) { height: 8px;  animation-delay: .3s; }
-  .bar-wrap { display: flex; align-items: flex-end; gap: 2px; height: 16px; }
-  @keyframes eq {
-    0%,100% { transform: scaleY(1); }
-    50%      { transform: scaleY(.3); }
-  }
-
-  .track-title {
-    flex: 1;
-    font-size: 13.5px;
-    color: var(--text);
-    line-height: 1.45;
-    transition: color .2s;
-  }
-  .track-duration {
-    font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
+    border-radius: 10px;
     flex-shrink: 0;
   }
+  .card-a .card-letter { background: var(--accent-a)22; color: var(--accent-a); }
+  .card-b .card-letter { background: var(--accent-b)22; color: var(--accent-b); }
+  .card-c .card-letter { background: var(--accent-c)22; color: var(--accent-c); }
+  .card-info { flex: 1; }
+  .card-name { font-size: 20px; font-weight: 700; margin-bottom: 3px; }
+  .card-sub { font-size: 13px; color: var(--text-dim); }
+  .card-arrow { color: var(--text-dim); font-size: 20px; }
 
-  /* ── Divider ── */
-  .section-divider {
+  /* ── GAME SCREEN ── */
+  #game-screen { width: 100%; max-width: 560px; display: none; }
+
+  .top-bar {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 16px;
-    margin: 52px 0 40px;
-    opacity: .35;
+    margin-bottom: 20px;
   }
-  .section-divider::before, .section-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-  .divider-mark {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    letter-spacing: .2em;
-    color: var(--muted);
+  .playlist-badge {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 4px 12px;
+    border-radius: 20px;
     text-transform: uppercase;
   }
+  .badge-a { background: var(--accent-a)22; color: var(--accent-a); }
+  .badge-b { background: var(--accent-b)22; color: var(--accent-b); }
+  .badge-c { background: var(--accent-c)22; color: var(--accent-c); }
 
-  /* ── Footer ── */
-  .site-footer {
-    margin-top: 80px;
-    padding-top: 28px;
-    border-top: 1px solid var(--border);
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    letter-spacing: .12em;
-    color: var(--muted);
+  .score-display {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .score-num { font-size: 26px; }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+  .fill-a { background: var(--accent-a); }
+  .fill-b { background: var(--accent-b); }
+  .fill-c { background: var(--accent-c); }
+
+  .question-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
     text-align: center;
   }
 
-  /* ── Scrollbar ── */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  /* ── PLAYER ── */
+  .player-box {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    position: relative;
+  }
+  .vinyl {
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle at 50%, #111 20%, #222 40%, #1a1a1a 60%, #222 80%);
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    position: relative;
+    border: 3px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .vinyl::after {
+    content: '';
+    width: 18px;
+    height: 18px;
+    background: var(--bg);
+    border-radius: 50%;
+    border: 3px solid #444;
+  }
+  .vinyl.spinning { animation: spin 2s linear infinite; }
+  .vinyl.paused { animation-play-state: paused; }
 
-  /* ── Responsive ── */
-  @media(max-width: 600px) {
-    .page-wrap { padding: 100px 18px 140px; }
-    #player-wrap { bottom: 16px; right: 16px; }
-    #yt-frame { width: 280px; height: 158px; }
-    .site-title { font-size: 2.4rem; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  .player-status {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+
+  .player-controls { display: flex; justify-content: center; gap: 12px; }
+  .ctrl-btn {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text);
+    transition: all 0.15s;
+  }
+  .ctrl-btn:hover { background: var(--border); transform: scale(1.08); }
+  .ctrl-btn.primary {
+    width: 54px;
+    height: 54px;
+    font-size: 20px;
+  }
+  .ctrl-btn.primary.btn-a { background: var(--accent-a)22; border-color: var(--accent-a)55; color: var(--accent-a); }
+  .ctrl-btn.primary.btn-b { background: var(--accent-b)22; border-color: var(--accent-b)55; color: var(--accent-b); }
+  .ctrl-btn.primary.btn-c { background: var(--accent-c)22; border-color: var(--accent-c)55; color: var(--accent-c); }
+
+  /* hidden youtube container */
+  #yt-container { position: fixed; top: -9999px; left: -9999px; width: 1px; height: 1px; }
+
+  /* ── OPTIONS ── */
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .option-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    color: var(--text);
+    font-family: inherit;
+  }
+  .option-btn:hover:not(:disabled) { border-color: #555; background: var(--surface2); transform: translateY(-1px); }
+  .option-btn:disabled { cursor: default; }
+  .option-key {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+  }
+  .option-text {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .option-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .option-btn.correct { background: var(--correct)18; border-color: var(--correct); }
+  .option-btn.wrong { background: var(--wrong)18; border-color: var(--wrong); }
+  .option-btn.correct .option-key, .option-btn.wrong .option-key { color: inherit; }
+
+  .hint-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .hint-chip {
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+
+  /* ── RESULT MESSAGE ── */
+  .result-msg {
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .result-msg.correct { background: var(--correct)18; color: var(--correct); display: block; }
+  .result-msg.wrong { background: var(--wrong)18; color: var(--wrong); display: block; }
+
+  .next-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius);
+    border: none;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;
+    transition: transform 0.15s, opacity 0.15s;
+    letter-spacing: 1px;
+  }
+  .next-btn:hover { transform: translateY(-2px); opacity: 0.92; }
+  .next-btn.btn-a { background: var(--accent-a); color: #fff; }
+  .next-btn.btn-b { background: var(--accent-b); color: #fff; }
+  .next-btn.btn-c { background: var(--accent-c); color: #111; }
+
+  /* ── FINAL SCREEN ── */
+  #final-screen { width: 100%; max-width: 480px; display: none; text-align: center; }
+  .final-emoji { font-size: 72px; margin-bottom: 16px; }
+  .final-title { font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+  .final-score {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 72px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .final-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 32px; }
+  .breakdown {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 24px;
+    text-align: left;
+  }
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-icon { margin-right: 8px; }
+  .restart-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius);
+    border: none;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--text);
+    color: var(--bg);
+    transition: opacity 0.15s;
+    letter-spacing: 1px;
+  }
+  .restart-btn:hover { opacity: 0.85; }
+
+  /* keyboard hint */
+  .kbd-hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 10px;
+  }
+  kbd {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: monospace;
+    font-size: 11px;
   }
 </style>
 </head>
 <body>
 
-<!-- Top now-playing bar -->
-<div id="now-playing-bar">
-  <div class="np-dot"></div>
-  <div class="np-label">Now Playing</div>
-  <div class="np-title" id="np-title">— 尚未播放 —</div>
-  <div class="np-artist" id="np-artist"></div>
-</div>
+<!-- YouTube hidden player -->
+<div id="yt-container"><div id="yt-player"></div></div>
 
-<!-- Floating player -->
-<div id="player-wrap">
-  <div id="yt-frame">
-    <div id="yt-container"></div>
-  </div>
-  <div id="player-controls">
-    <button class="ctrl-btn" id="toggle-video-btn" onclick="toggleVideo()">▪ 隱藏畫面</button>
-    <button class="ctrl-btn" onclick="prevSong()">‹ 上一首</button>
-    <button class="ctrl-btn primary" onclick="nextSong()">下一首 ›</button>
-  </div>
-</div>
-
-<!-- Main content -->
-<div class="page-wrap">
-
-  <header class="site-header">
-    <div class="eyebrow">Personal Playlist · Taiwan Indie</div>
-    <h1 class="site-title">我的<br>歌單</h1>
-    <p class="site-sub">收藏的台灣獨立音樂，按下播放讓歌聲隨機響起，或自行選擇想聽的曲目。</p>
-    <div class="stat-row">
-      <div class="stat">
-        <span class="stat-num" id="total-count">63</span>
-        <span class="stat-label">首歌曲</span>
+<!-- ── SELECT SCREEN ── -->
+<div id="select-screen">
+  <p class="logo">🎵 MUSIC QUIZ</p>
+  <h1>猜歌遊戲</h1>
+  <p class="select-title">選擇你的歌單類型</p>
+  <div class="playlist-cards">
+    <div class="playlist-card card-a" onclick="startGame('A')">
+      <div class="card-letter">A</div>
+      <div class="card-info">
+        <div class="card-name">樂團歌曲</div>
+        <div class="card-sub">台灣獨立樂團・搖滾・另類</div>
       </div>
-      <div class="stat">
-        <span class="stat-num" id="artist-count">—</span>
-        <span class="stat-label">位藝術家</span>
-      </div>
+      <div class="card-arrow">›</div>
     </div>
-  </header>
+    <div class="playlist-card card-b" onclick="startGame('B')">
+      <div class="card-letter">B</div>
+      <div class="card-info">
+        <div class="card-name">KPOP 歌曲</div>
+        <div class="card-sub">韓國流行音樂・偶像團體</div>
+      </div>
+      <div class="card-arrow">›</div>
+    </div>
+    <div class="playlist-card card-c" onclick="startGame('C')">
+      <div class="card-letter">C</div>
+      <div class="card-info">
+        <div class="card-name">台灣流行樂</div>
+        <div class="card-sub">華語流行・台灣主流歌手</div>
+      </div>
+      <div class="card-arrow">›</div>
+    </div>
+  </div>
+</div>
 
-  <div class="shuffle-hero">
-    <button id="shuffle-btn" onclick="shufflePlay()">
-      <span>✦ 隨機播放一首</span>
-    </button>
+<!-- ── GAME SCREEN ── -->
+<div id="game-screen">
+  <div class="top-bar">
+    <span class="playlist-badge" id="game-badge">A</span>
+    <div class="score-display">分數 <span class="score-num" id="score-num">0</span></div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+
+  <p class="question-label">第 <span id="q-num">1</span> 題，共 10 題</p>
+
+  <div class="player-box">
+    <div class="vinyl" id="vinyl-disc">🎵</div>
+    <p class="player-status" id="player-status">載入中…</p>
+    <div class="player-controls">
+      <button class="ctrl-btn" onclick="rewind()" title="重播片段">↺</button>
+      <button class="ctrl-btn primary" id="play-btn" onclick="togglePlay()">▶</button>
+      <button class="ctrl-btn" onclick="skipAhead()" title="快進 5 秒">→</button>
+    </div>
   </div>
 
-  <div id="track-sections"></div>
-
-  <div class="site-footer">
-    <p>播放器由 YouTube 提供 · 版權屬各藝術家所有</p>
+  <div class="hint-row" id="hint-row">
+    <span class="hint-chip" id="hint-duration">⏱ 0:00</span>
+    <span class="hint-chip" id="hint-artist" style="display:none">🎤 ?</span>
   </div>
+
+  <div class="options-grid" id="options-grid"></div>
+  <div class="result-msg" id="result-msg"></div>
+  <button class="next-btn" id="next-btn" onclick="nextQuestion()">下一題 →</button>
+  <p class="kbd-hint">鍵盤快捷鍵：<kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> 選答案 ｜ <kbd>Space</kbd> 播放/暫停</p>
+</div>
+
+<!-- ── FINAL SCREEN ── -->
+<div id="final-screen">
+  <div class="final-emoji" id="final-emoji">🏆</div>
+  <div class="final-title">遊戲結束！</div>
+  <div class="final-score" id="final-score">0</div>
+  <div class="final-sub">分 / 100 分</div>
+  <div class="breakdown" id="breakdown"></div>
+  <button class="restart-btn" onclick="goBack()">⟳ 重新開始</button>
 </div>
 
 <script>
-// ── Song data ──
-const songs = [
-  // 美秀集團
-  { id:'dQUMBtHWA4M', title:'愛情的大壞蛋', artist:'美秀集團', dur:'4:13' },
-  { id:'kp3GK_ky0q4', title:'戀人', artist:'美秀集團', dur:'5:06' },
-  { id:'iFm2FnrR4Ik', title:'白鯨', artist:'美秀集團', dur:'5:09' },
-  { id:'Ik5FByEMWQA', title:'我要你愛', artist:'美秀集團', dur:'4:17' },
-  { id:'dRrS3tTpkPQ', title:'電火王', artist:'美秀集團', dur:'5:24' },
-  { id:'HF7qJcq-uPo', title:'捲菸', artist:'美秀集團', dur:'3:58' },
-  // icyball
-  { id:'R9cJVk5k2FM', title:'不在乎', artist:'icyball 冰球樂團', dur:'4:05' },
-  { id:'0m50_oTGrOM', title:'能不能和我留在台北（陪我幾天）', artist:'icyball 冰球樂團', dur:'4:04' },
-  { id:'Qm9A4rLpG7Q', title:'醉後喜歡我', artist:'icyball 冰球樂團', dur:'4:21' },
-  { id:'P2KJRPW9MDs', title:'你要是真的愛我才不會這樣', artist:'icyball 冰球樂團', dur:'3:50' },
-  { id:'RzqTzN_DGIY', title:'Dumplings', artist:'icyball 冰球樂團', dur:'3:18' },
-  { id:'XKi3zW-MiPY', title:'不小心 ft. 宋芸樺', artist:'icyball 冰球樂團', dur:'5:06' },
-  { id:'8I38BZjEBEU', title:'搖啊搖 ft. Limi', artist:'icyball 冰球樂團', dur:'4:05' },
-  { id:'F-cJwLqcF6s', title:'說愛我吧', artist:'icyball 冰球樂團', dur:'4:38' },
-  // hue
-  { id:'z7Gx7bsWLBc', title:'爛情歌', artist:'hue', dur:'5:59' },
-  { id:'6hCG4IJBSPM', title:'我們', artist:'hue', dur:'5:22' },
-  { id:'WmpSPDG5fYc', title:'在', artist:'hue', dur:'5:37' },
-  // 公館青少年
-  { id:'BVXHH3rXZiQ', title:'你到底在選擇什麼', artist:'公館青少年 GGteens', dur:'4:15' },
-  { id:'bZFrY5XLlO4', title:'要不要跟我出去走一走', artist:'公館青少年 GGteens', dur:'4:25' },
-  { id:'s3xFXWg-C9A', title:'九百九十次戀愛', artist:'公館青少年 GGteens', dur:'3:37' },
-  { id:'ZXRzBb-rNoQ', title:'請你離開 ft.異鄉人OdR', artist:'公館青少年 GGteens', dur:'3:14' },
-  { id:'sBxB5vZLVSE', title:'星星', artist:'公館青少年 GGteens', dur:'5:31' },
-  { id:'Xf9kNb9WFAU', title:'至少我們都還沒放棄', artist:'公館青少年 GGteens', dur:'4:49' },
-  { id:'PsRt1bXGEO8', title:'等你會不會只是慣性', artist:'公館青少年 GGteens', dur:'3:49' },
-  { id:'M5FDW_FtYgQ', title:'逐漸抽離你的慣性', artist:'公館青少年 GGteens', dur:'4:24' },
-  { id:'dYCqpXwQ3HQ', title:'今天明天', artist:'公館青少年 GGteens', dur:'3:16' },
-  // 溫蒂漫步
-  { id:'YVE0_JnOOV0', title:'我想和你一起', artist:'溫蒂漫步 Wendy Wander', dur:'7:03' },
-  { id:'1BXTYM-axWE', title:'你怎麼捨得我難過', artist:'溫蒂漫步 Wendy Wander', dur:'4:12' },
-  { id:'ZJR7kCZkG8c', title:'明白我的心', artist:'溫蒂漫步 Wendy Wander', dur:'5:26' },
-  // 粗大Band
-  { id:'vJdGGLlXnEg', title:'留下來陪我 ft. 伍悅', artist:'粗大Band', dur:'4:38' },
-  { id:'y_Kxh0GX3Jo', title:'大薯 Sad Fries', artist:'粗大Band', dur:'2:56' },
-  { id:'S2VG9MMRp-s', title:'無可救藥的浪漫 ft. E1and', artist:'粗大Band', dur:'3:36' },
-  { id:'YX0W1yk34c0', title:'阿姨阿姨', artist:'粗大Band', dur:'4:20' },
-  // Who Cares
-  { id:'xqw3HnfRLZ4', title:'菸癮', artist:'Who Cares 胡凱兒', dur:'5:13' },
-  { id:'pQm6KZy_-o8', title:'花季', artist:'Who Cares 胡凱兒', dur:'4:11' },
-  { id:'iXyOaXY5tGA', title:'不得不捨得 ft. 琳誼', artist:'Who Cares 胡凱兒', dur:'5:00' },
-  { id:'zTRR-X4XZLE', title:'突然醒來的某個下午', artist:'Who Cares 胡凱兒', dur:'3:56' },
-  { id:'cWbNhFqO2o4', title:'你給過我的快樂', artist:'Who Cares 胡凱兒', dur:'4:47' },
-  // 理想混蛋
-  { id:'dT6EkVxAW_o', title:'離開的一路上', artist:'理想混蛋 Bestards', dur:'4:32' },
-  // Crispy
-  { id:'CdALq7yGGso', title:'相愛就是說了100次對不起', artist:'Crispy脆樂團', dur:'4:53' },
-  { id:'9jD_7GKFvAw', title:'揹上悲傷北上', artist:'Crispy脆樂團', dur:'3:51' },
-  { id:'hZPL6GBRCvk', title:'黑暗的盡頭', artist:'Crispy脆樂團', dur:'5:32' },
-  // 怕胖團
-  { id:'_0P_rEZTkj8', title:'魚', artist:'怕胖團', dur:'4:46' },
-  // 麋先生
-  { id:'r4_a3bPjOC0', title:'嗜愛動物', artist:'麋先生 MIXER', dur:'4:45' },
-  // 滅火器
-  { id:'3ZKXJHM3pRQ', title:'長途夜車', artist:'滅火器 Fire EX.', dur:'3:07' },
-  { id:'4m7ECzP4V1Y', title:'十二月的妳', artist:'滅火器 Fire EX.', dur:'5:41' },
-  { id:'LR3MX7_Ro_Q', title:'人生尾路', artist:'滅火器 Fire EX.', dur:'6:50' },
-  { id:'m9v7RX11-gM', title:'島嶼天光', artist:'滅火器 Fire EX.', dur:'4:21' },
-  { id:'tIREuGq4TME', title:'無名英雄', artist:'滅火器 Fire EX.', dur:'3:21' },
-  { id:'P3PUxXHFJlE', title:'一九四五', artist:'滅火器 Fire EX.', dur:'4:29' },
-  { id:'dvj_LBT4vbA', title:'海上的人', artist:'滅火器 Fire EX.', dur:'4:26' },
-  { id:'1UKFiHTJIVs', title:'人生', artist:'滅火器 Fire EX.', dur:'3:44' },
-  { id:'uvyixWEBBxE', title:'生活革命', artist:'滅火器 Fire EX.', dur:'2:57' },
-  // 草東
-  { id:'x5Fxzp9JDLA', title:'床', artist:'草東沒有派對', dur:'3:52' },
-  { id:'v9fzOVFM0GA', title:'但', artist:'草東沒有派對', dur:'2:22' },
-  // 康士坦
-  { id:'lkHH4RqEvpE', title:'擱淺的人', artist:'康士坦的變化球', dur:'4:40' },
-  { id:'E0KMrPEzK-g', title:'美好的事可不可以發生在我身上', artist:'康士坦的變化球', dur:'6:26' },
-  // 老王樂隊
-  { id:'k16pGr1N_2I', title:'我還年輕 我還年輕', artist:'老王樂隊', dur:'6:08' },
-  // 溫室雜草
-  { id:'_0MjfzDmkQs', title:'在這個年代，我們不浪漫', artist:'溫室雜草 Easy Weeds', dur:'4:58' },
-  // 南西肯恩
-  { id:'FBVlnFUBjY8', title:'大海', artist:'南西肯恩 NeciKen', dur:'5:41' },
-  // 芒果醬
-  { id:'dOVZjEgHCuU', title:'小紫 aka 給我錢', artist:'芒果醬 Mango Jump', dur:'4:21' },
-  { id:'GOhm-G1U62I', title:'《我喜歡你》I\'m into you', artist:'芒果醬 Mango Jump', dur:'3:34' },
-];
+// ═══════════════════════════════════════════════
+//  PLAYLISTS  (YouTube video ID + metadata)
+// ═══════════════════════════════════════════════
+const PLAYLISTS = {
+  A: { // 樂團歌曲 - Taiwanese indie bands
+    name: '樂團歌曲', accent: 'a',
+    songs: [
+      { id: 'D4V8KgFqMEw', title: '愛情的大壞蛋', artist: '美秀集團', start: 25 },
+      { id: 'aqxuLpjlNeU', title: '戀人', artist: '美秀集團', start: 20 },
+      { id: 'yLFZZzFAJzM', title: '捲菸', artist: '美秀集團', start: 10 },
+      { id: 'u4CStCIoYv0', title: '不在乎', artist: 'icyball 冰球樂團', start: 15 },
+      { id: 'hBp7xhJLXMQ', title: '能不能和我留在台北', artist: 'icyball 冰球樂團', start: 20 },
+      { id: 'RClEOHjHYhA', title: '醉後喜歡我', artist: 'icyball 冰球樂團', start: 18 },
+      { id: 'lmjhYpWaOrE', title: '搖啊搖', artist: 'icyball 冰球樂團', start: 15 },
+      { id: 'Y1BLv4PQLMU', title: '你要不要跟我出去走一走', artist: '公館青少年 GGteens', start: 20 },
+      { id: 'hLgWL2OYJLU', title: '你到底在選擇什麼', artist: '公館青少年 GGteens', start: 15 },
+      { id: 'KsTHXGl85GQ', title: '逐漸抽離你的慣性', artist: '公館青少年 GGteens', start: 20 },
+      { id: '7qoXpZAiuH4', title: '我想和你一起', artist: '溫蒂漫步 Wendy Wander', start: 30 },
+      { id: 'PZJhSGS_Y_I', title: '留下來陪我', artist: '粗大Band', start: 20 },
+      { id: 'cNZbFdD2Czk', title: '菸癮', artist: 'Who Cares 胡凱兒', start: 15 },
+      { id: 'XNniSQ7hHlY', title: '花季', artist: 'Who Cares 胡凱兒', start: 20 },
+      { id: '5o_BxhvCTbM', title: '離開的一路上', artist: '理想混蛋 Bestards', start: 20 },
+      { id: 'R4kWyAZCw8k', title: '相愛就是說了100次對不起', artist: 'Crispy 脆樂團', start: 25 },
+      { id: 'UajS0jJ6AyQ', title: '魚', artist: '怕胖團 PAPUN BAND', start: 20 },
+      { id: 'yQxzz5RFKKY', title: '嗜愛動物', artist: '麋先生 MIXER', start: 18 },
+      { id: 'PXqlWBSHImw', title: '長途夜車', artist: '滅火器 Fire EX.', start: 15 },
+      { id: 'GAhPOhXEZp4', title: '十二月的妳', artist: '滅火器 Fire EX.', start: 20 },
+      { id: 'p-_BHfSf11U', title: '島嶼天光', artist: '滅火器 Fire EX.', start: 15 },
+      { id: 'VbMDFdBvwGE', title: '一九四五', artist: '滅火器 Fire EX.', start: 20 },
+      { id: 'BxHHYVhXGWA', title: '床', artist: '草東沒有派對', start: 20 },
+      { id: 'u0-XWqYDSXU', title: '擱淺的人', artist: '康士坦的變化球 KST', start: 30 },
+      { id: 'Rz6G-UPrfNA', title: '美好的事可不可以發生在我身上', artist: '康士坦的變化球 KST', start: 25 },
+      { id: 'vJwPLrJeC5c', title: '我還年輕 我還年輕', artist: '老王樂隊', start: 25 },
+      { id: 'x0MhCv1ZQWE', title: '在這個年代，我們不浪漫', artist: '溫室雜草 Easy Weeds', start: 20 },
+      { id: 'XCXIrMV6X4A', title: '大海', artist: '南西肯恩 NeciKen', start: 25 },
+      { id: 'wGHBu-T6WuU', title: '揹上悲傷北上', artist: 'Crispy 脆樂團', start: 20 },
+      { id: 'jCKqbTZ-7mo', title: '小紫aka給我錢', artist: '芒果醬 Mango Jump', start: 15 },
+    ]
+  },
+  B: { // KPOP
+    name: 'KPOP 歌曲', accent: 'b',
+    songs: [
+      { id: 'gdZLi9oWNZg', title: 'Dynamite', artist: 'BTS', start: 10 },
+      { id: 'MBdVXkSdhwU', title: 'PINK VENOM', artist: 'BLACKPINK', start: 15 },
+      { id: 'tMqA3KO3VcM', title: 'How You Like That', artist: 'BLACKPINK', start: 10 },
+      { id: 'ioNng23DkIM', title: 'Boy With Luv', artist: 'BTS ft. Halsey', start: 20 },
+      { id: 'pSudEWBAYRE', title: 'LOVE DIVE', artist: 'IVE', start: 15 },
+      { id: 'eOaHSAMxxPs', title: 'After LIKE', artist: 'IVE', start: 10 },
+      { id: 'G4vn2ESl_P0', title: 'Nxde', artist: '(G)I-DLE', start: 15 },
+      { id: 'HV7T5b38MOE', title: 'ANTIFRAGILE', artist: 'LE SSERAFIM', start: 10 },
+      { id: 'RPnxdEL2VtY', title: 'Butter', artist: 'BTS', start: 10 },
+      { id: 'WITiX-yLMqw', title: 'Lovesick Girls', artist: 'BLACKPINK', start: 15 },
+      { id: '7C2z4GqqS5E', title: 'DALLA DALLA', artist: 'ITZY', start: 10 },
+      { id: 'KtOc2785YoA', title: 'Not Shy', artist: 'ITZY', start: 15 },
+      { id: 'f5uDDMZpPZc', title: 'Next Level', artist: 'aespa', start: 12 },
+      { id: 'qFPMwLJ6Zzs', title: 'Supernova', artist: 'aespa', start: 10 },
+      { id: 'yb4Z1TmCqc4', title: 'Kill This Love', artist: 'BLACKPINK', start: 10 },
+      { id: 'mGVDGBSdONs', title: 'Permission to Dance', artist: 'BTS', start: 15 },
+      { id: 'bPnIKzHo2Y8', title: 'Rollin\'', artist: 'Brave Girls', start: 12 },
+      { id: 'veLO4uIqBs4', title: 'Money', artist: 'LISA', start: 10 },
+      { id: 'cmx2KfBnBGg', title: 'Cheer Up', artist: 'TWICE', start: 20 },
+      { id: 'CLeZyIID9Bo', title: 'TT', artist: 'TWICE', start: 15 },
+      { id: 'kOHB85mDOgU', title: 'Fancy', artist: 'TWICE', start: 12 },
+      { id: 'yUefmECWzOo', title: 'What is Love?', artist: 'TWICE', start: 18 },
+      { id: 'V1i9eXoVUL4', title: 'I AM', artist: 'IVE', start: 12 },
+      { id: 'MBdVXkSdhwU', title: 'Shut Down', artist: 'BLACKPINK', start: 10 },
+      { id: 'IHNstlMJyNg', title: 'TOMBOY', artist: '(G)I-DLE', start: 12 },
+    ]
+  },
+  C: { // 台灣流行樂
+    name: '台灣流行樂', accent: 'c',
+    songs: [
+      { id: 'gLGJNXpllGE', title: '說好的幸福呢', artist: '周杰倫', start: 20 },
+      { id: 'hRkR1VqEPTs', title: '告白氣球', artist: '周杰倫', start: 15 },
+      { id: 'T4QvBFPLDBc', title: '不愛我就拉倒', artist: '周杰倫', start: 12 },
+      { id: 'ooCjBe0PqfI', title: '愛情廢柴', artist: '五月天', start: 20 },
+      { id: 'FuKi03X61so', title: '倔強', artist: '五月天', start: 25 },
+      { id: 'JqR0p8_Y6Fw', title: '笑忘歌', artist: '五月天', start: 20 },
+      { id: 'hP_lFXqO3yA', title: '最重要的小事', artist: '五月天', start: 15 },
+      { id: 'Mq-kCi-KHGY', title: '那些年', artist: '胡夏', start: 20 },
+      { id: 'Yr5MiEIqJc8', title: '愛我還是他', artist: 'A-Lin', start: 15 },
+      { id: 'V9_7eeSdGH4', title: '好膽你就來', artist: '陳雷', start: 10 },
+      { id: 'JalgnPE0yNk', title: '不將就', artist: '李榮浩', start: 20 },
+      { id: '9SKE_t6C9H8', title: '年少有為', artist: '李榮浩', start: 15 },
+      { id: 'YkzXEPUBLyA', title: '演員', artist: '薛之謙', start: 20 },
+      { id: 'kGSknOHNF74', title: '醜八怪', artist: '薛之謙', start: 15 },
+      { id: 'R8m5YEFQB1U', title: '小幸運', artist: '田馥甄 Hebe', start: 20 },
+      { id: 'HJ91Q68E1RE', title: '你就不要想起我', artist: '田馥甄 Hebe', start: 18 },
+      { id: 'fYQAIzMbaqQ', title: 'All of Me', artist: '鄧紫棋 G.E.M.', start: 15 },
+      { id: 'WT8pvB7CGVE', title: '句號', artist: '鄧紫棋 G.E.M.', start: 12 },
+      { id: 'l5-3NHAK_Oo', title: '說散就散', artist: '周興哲', start: 18 },
+      { id: 'EfKjl9eGQFw', title: '以後別做朋友', artist: '周興哲', start: 20 },
+      { id: 'rlSmEzIHHrk', title: '心如刀割', artist: '張學友', start: 20 },
+      { id: 'J8Q78eWOmBs', title: '玫瑰香', artist: '楊丞琳', start: 15 },
+      { id: 'zQUuS2aV7aU', title: 'Play', artist: '楊丞琳', start: 12 },
+      { id: '4n0qnlwPv_Y', title: '差點', artist: '林俊傑 JJ Lin', start: 20 },
+      { id: 'c6v7jJBYLWs', title: '修煉愛情', artist: '林俊傑 JJ Lin', start: 18 },
+    ]
+  }
+};
 
-let currentIdx = -1;
+// ═══════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════
+let currentPlaylist = null;
+let questions = [];
+let currentQ = 0;
+let score = 0;
+let answered = false;
+let history = [];
 let ytPlayer = null;
-let videoVisible = true;
-let ytApiReady = false;
+let ytReady = false;
+let isPlaying = false;
+let currentSong = null;
 
-// Group by artist
-const artistMap = {};
-songs.forEach((s, i) => {
-  if (!artistMap[s.artist]) artistMap[s.artist] = [];
-  artistMap[s.artist].push({ ...s, idx: i });
-});
-
-// Update stat
-document.getElementById('artist-count').textContent = Object.keys(artistMap).length;
-document.getElementById('total-count').textContent = songs.length;
-
-// Render sections
-function renderSections() {
-  const container = document.getElementById('track-sections');
-  const artists = Object.keys(artistMap);
-  artists.forEach((artist, ai) => {
-    const section = document.createElement('div');
-    section.className = 'artist-section';
-    section.style.animationDelay = (0.05 * ai + 0.6) + 's';
-    section.id = 'artist-' + ai;
-
-    const tracks = artistMap[artist];
-    const [zh, en] = artist.split(' ').reduce((acc, w) => {
-      if (/^[A-Za-z]/.test(w)) { acc[1] += (acc[1] ? ' ' : '') + w; }
-      else { acc[0] += w; }
-      return acc;
-    }, ['', '']);
-
-    section.innerHTML = `
-      <div class="artist-header">
-        <span class="artist-name">${zh || artist}</span>
-        ${en ? `<span class="artist-name-en">${en}</span>` : ''}
-        <span class="artist-count">${tracks.length} 首</span>
-      </div>
-      <ul class="track-list" id="list-${ai}"></ul>
-    `;
-
-    container.appendChild(section);
-
-    const ul = document.getElementById('list-' + ai);
-    tracks.forEach((s, ti) => {
-      const li = document.createElement('li');
-      li.className = 'track-item';
-      li.id = 'track-' + s.idx;
-      li.onclick = () => playSong(s.idx);
-      li.innerHTML = `
-        <span class="track-num">${(ti+1).toString().padStart(2,'0')}</span>
-        <div class="track-playing-icon">
-          <div class="bar-wrap">
-            <div class="bar"></div><div class="bar"></div><div class="bar"></div>
-          </div>
-        </div>
-        <span class="track-title">${s.title}</span>
-        <span class="track-duration">${s.dur}</span>
-      `;
-      ul.appendChild(li);
-    });
-  });
-}
-renderSections();
-
-// YouTube IFrame API
+// ═══════════════════════════════════════════════
+//  YOUTUBE API
+// ═══════════════════════════════════════════════
 window.onYouTubeIframeAPIReady = function () {
-  ytApiReady = true;
-  ytPlayer = new YT.Player('yt-container', {
-    height: '180', width: '320',
-    playerVars: { autoplay: 1, controls: 1, rel: 0, modestbranding: 1 },
+  ytPlayer = new YT.Player('yt-player', {
+    height: '1',
+    width: '1',
+    playerVars: { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1 },
     events: {
-      onStateChange: function(e) {
-        if (e.data === YT.PlayerState.ENDED) nextSong();
+      onReady: () => { ytReady = true; if (pendingLoad) loadSong(pendingLoad.id, pendingLoad.start); },
+      onStateChange: (e) => {
+        const vinyl = document.getElementById('vinyl-disc');
+        if (e.data === YT.PlayerState.PLAYING) {
+          vinyl.className = 'vinyl spinning';
+          document.getElementById('play-btn').textContent = '⏸';
+          isPlaying = true;
+          startTimer();
+        } else {
+          vinyl.className = 'vinyl';
+          document.getElementById('play-btn').textContent = '▶';
+          isPlaying = false;
+        }
       }
     }
   });
 };
 
-const tag = document.createElement('script');
-tag.src = 'https://www.youtube.com/iframe_api';
-document.head.appendChild(tag);
+let pendingLoad = null;
+function loadSong(videoId, startSec) {
+  if (!ytReady) { pendingLoad = { id: videoId, start: startSec }; return; }
+  pendingLoad = null;
+  ytPlayer.loadVideoById({ videoId, startSeconds: startSec });
+  ytPlayer.playVideo();
+  document.getElementById('player-status').textContent = '🎵 正在播放…';
+}
 
-function playSong(idx) {
-  // deactivate old
-  if (currentIdx >= 0) {
-    const old = document.getElementById('track-' + currentIdx);
-    if (old) old.classList.remove('active');
+let timerInterval = null;
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    if (!ytPlayer || !isPlaying) return;
+    const t = ytPlayer.getCurrentTime() || 0;
+    const start = currentSong ? currentSong.start : 0;
+    const elapsed = Math.max(0, t - start);
+    const m = Math.floor(elapsed / 60), s = Math.floor(elapsed % 60);
+    document.getElementById('hint-duration').textContent = `⏱ ${m}:${s.toString().padStart(2,'0')}`;
+    // After 30s, reveal artist hint
+    if (elapsed >= 30 && !document.getElementById('hint-artist').style.display !== 'none') {
+      document.getElementById('hint-artist').style.display = '';
+      document.getElementById('hint-artist').textContent = `🎤 ${currentSong.artist}`;
+    }
+  }, 500);
+}
+
+function togglePlay() {
+  if (!ytPlayer) return;
+  if (isPlaying) { ytPlayer.pauseVideo(); }
+  else { ytPlayer.playVideo(); }
+}
+function rewind() {
+  if (!ytPlayer || !currentSong) return;
+  ytPlayer.seekTo(currentSong.start, true);
+  ytPlayer.playVideo();
+}
+function skipAhead() {
+  if (!ytPlayer) return;
+  ytPlayer.seekTo((ytPlayer.getCurrentTime() || 0) + 5, true);
+}
+
+// ═══════════════════════════════════════════════
+//  GAME LOGIC
+// ═══════════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  currentIdx = idx;
-  const song = songs[idx];
+  return a;
+}
 
-  // activate new
-  const el = document.getElementById('track-' + idx);
-  if (el) {
-    el.classList.add('active');
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
+function startGame(type) {
+  currentPlaylist = PLAYLISTS[type];
+  const pool = shuffle(currentPlaylist.songs).slice(0, 10);
+  questions = pool;
+  currentQ = 0;
+  score = 0;
+  history = [];
 
-  // update bar
-  document.getElementById('np-title').textContent = song.title;
-  document.getElementById('np-artist').textContent = song.artist;
+  // UI
+  document.getElementById('select-screen').style.display = 'none';
+  document.getElementById('final-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
 
-  // play
-  if (ytPlayer && ytApiReady && ytPlayer.loadVideoById) {
-    ytPlayer.loadVideoById(song.id);
+  const badge = document.getElementById('game-badge');
+  badge.textContent = type + ' · ' + currentPlaylist.name;
+  badge.className = 'playlist-badge badge-' + currentPlaylist.accent;
+
+  const pf = document.getElementById('progress-fill');
+  pf.className = 'progress-fill fill-' + currentPlaylist.accent;
+
+  const nb = document.getElementById('next-btn');
+  nb.className = 'next-btn btn-' + currentPlaylist.accent;
+
+  const pb = document.getElementById('play-btn');
+  pb.className = 'ctrl-btn primary btn-' + currentPlaylist.accent;
+
+  loadQuestion();
+}
+
+function loadQuestion() {
+  answered = false;
+  clearInterval(timerInterval);
+  const q = questions[currentQ];
+  currentSong = q;
+
+  // Update progress
+  document.getElementById('q-num').textContent = currentQ + 1;
+  document.getElementById('score-num').textContent = score;
+  document.getElementById('progress-fill').style.width = ((currentQ / 10) * 100) + '%';
+
+  // Reset UI
+  document.getElementById('result-msg').className = 'result-msg';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('hint-duration').textContent = '⏱ 0:00';
+  document.getElementById('hint-artist').style.display = 'none';
+  document.getElementById('player-status').textContent = '載入中…';
+  document.getElementById('vinyl-disc').className = 'vinyl';
+
+  // Build options: 1 correct + 3 distractors from same playlist
+  const pool = currentPlaylist.songs.filter(s => s.id !== q.id);
+  const distractors = shuffle(pool).slice(0, 3);
+  const options = shuffle([q, ...distractors]);
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  const keys = ['1', '2', '3', '4'];
+  options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.dataset.id = opt.id;
+    btn.dataset.title = opt.title;
+    btn.innerHTML = `
+      <div class="option-key">${keys[i]}</div>
+      <div class="option-text">${opt.title}</div>
+      <div class="option-sub">${opt.artist}</div>
+    `;
+    btn.onclick = () => answer(opt.id, q.id, btn);
+    grid.appendChild(btn);
+  });
+
+  // Load YouTube
+  loadSong(q.id, q.start);
+}
+
+function answer(selectedId, correctId, btn) {
+  if (answered) return;
+  answered = true;
+
+  const correct = selectedId === correctId;
+  const pts = correct ? 10 : 0;
+  score += pts;
+  history.push({ q: questions[currentQ], correct });
+
+  // Highlight buttons
+  document.querySelectorAll('.option-btn').forEach(b => {
+    b.disabled = true;
+    if (b.dataset.id === correctId) b.classList.add('correct');
+    else if (b === btn && !correct) b.classList.add('wrong');
+  });
+
+  // Result message
+  const msg = document.getElementById('result-msg');
+  if (correct) {
+    msg.textContent = `✅ 答對了！+10 分｜《${questions[currentQ].title}》`;
+    msg.className = 'result-msg correct';
   } else {
-    setTimeout(() => { if (ytPlayer && ytPlayer.loadVideoById) ytPlayer.loadVideoById(song.id); }, 800);
+    msg.textContent = `❌ 答錯了！正確答案是《${questions[currentQ].title}》`;
+    msg.className = 'result-msg wrong';
   }
 
-  // show player
-  document.getElementById('yt-frame').classList.add('visible');
+  // Stop music
+  if (ytPlayer) ytPlayer.stopVideo();
+  clearInterval(timerInterval);
+
+  // Show next
+  const nb = document.getElementById('next-btn');
+  nb.style.display = 'block';
+  nb.textContent = currentQ < 9 ? '下一題 →' : '查看結果 🏆';
+
+  document.getElementById('score-num').textContent = score;
 }
 
-function shufflePlay() {
-  const idx = Math.floor(Math.random() * songs.length);
-  playSong(idx);
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= 10) { showFinal(); return; }
+  loadQuestion();
 }
 
-function nextSong() {
-  const idx = (currentIdx + 1) % songs.length;
-  playSong(idx);
+function showFinal() {
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('final-screen').style.display = 'block';
+
+  const final = document.getElementById('final-score');
+  final.textContent = score;
+
+  const pct = score / 100;
+  const emoji = pct >= 0.9 ? '🏆' : pct >= 0.7 ? '🎉' : pct >= 0.5 ? '🎵' : '💪';
+  document.getElementById('final-emoji').textContent = emoji;
+
+  // Color score by playlist
+  final.style.color = `var(--accent-${currentPlaylist.accent})`;
+
+  // Breakdown
+  const bd = document.getElementById('breakdown');
+  const correct = history.filter(h => h.correct).length;
+  bd.innerHTML = `
+    <div class="breakdown-row"><span><span class="breakdown-icon">🎵</span>歌單</span><span>${currentPlaylist.name}</span></div>
+    <div class="breakdown-row"><span><span class="breakdown-icon">✅</span>答對</span><span>${correct} / 10 題</span></div>
+    <div class="breakdown-row"><span><span class="breakdown-icon">❌</span>答錯</span><span>${10 - correct} / 10 題</span></div>
+    <div class="breakdown-row"><span><span class="breakdown-icon">⭐</span>最終得分</span><span style="font-weight:700;color:var(--accent-${currentPlaylist.accent})">${score} 分</span></div>
+  `;
+
+  if (ytPlayer) ytPlayer.stopVideo();
+  clearInterval(timerInterval);
 }
 
-function prevSong() {
-  const idx = (currentIdx - 1 + songs.length) % songs.length;
-  playSong(idx);
+function goBack() {
+  document.getElementById('final-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('select-screen').style.display = 'block';
+  if (ytPlayer) ytPlayer.stopVideo();
+  clearInterval(timerInterval);
 }
 
-function toggleVideo() {
-  videoVisible = !videoVisible;
-  const frame = document.getElementById('yt-frame');
-  const btn = document.getElementById('toggle-video-btn');
-  if (videoVisible) {
-    frame.style.display = 'block';
-    btn.textContent = '▪ 隱藏畫面';
-  } else {
-    frame.style.display = 'none';
-    btn.textContent = '▶ 顯示畫面';
+// ── Keyboard shortcuts ──
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('game-screen').style.display === 'none') return;
+  if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  if (['1','2','3','4'].includes(e.key)) {
+    const btns = document.querySelectorAll('.option-btn');
+    const idx = parseInt(e.key) - 1;
+    if (btns[idx] && !btns[idx].disabled) btns[idx].click();
   }
-}
-
-// Auto-shuffle on page load
-window.addEventListener('load', () => {
-  setTimeout(shufflePlay, 800);
+  if ((e.key === 'Enter' || e.key === 'ArrowRight') && document.getElementById('next-btn').style.display !== 'none') {
+    document.getElementById('next-btn').click();
+  }
 });
 </script>
+
+<!-- Load YouTube IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
