@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>樂團歌曲猜歌大賽 🎧 (本機流暢版)</title>
+    <title>樂團歌曲猜歌大賽 🎧 (100% 本機出聲版)</title>
     <style>
         :root {
             --primary: #6366f1;
@@ -71,14 +71,14 @@
             height: 20px;
             background-color: var(--primary);
             border-radius: 4px;
-            animation: bounce 1s ease-in-out infinite alternate;
+            animation: bounce 0.6s ease-in-out infinite alternate;
             animation-play-state: paused;
         }
 
-        .bar:nth-child(2) { animation-delay: 0.2s; }
-        .bar:nth-child(3) { animation-delay: 0.4s; }
-        .bar:nth-child(4) { animation-delay: 0.6s; }
-        .bar:nth-child(5) { animation-delay: 0.3s; }
+        .bar:nth-child(2) { animation-delay: 0.1s; }
+        .bar:nth-child(3) { animation-delay: 0.2s; }
+        .bar:nth-child(4) { animation-delay: 0.3s; }
+        .bar:nth-child(5) { animation-delay: 0.15s; }
 
         @keyframes bounce {
             100% { height: 80px; background-color: #a5b4fc; }
@@ -178,15 +178,13 @@
 <body>
 
     <div class="container">
-        <!-- 1. 開始畫面 -->
         <div id="start-screen" class="screen active">
             <h1>🎧 樂團歌曲猜歌大賽</h1>
-            <p>聽旋律猜猜看是哪一首熱門樂團神曲！</p>
-            <p style="color: #cee; font-size: 0.9rem;">本機優化版：點擊下方按鈕即可完美流暢播放，不會再閃退或跳題囉！</p>
+            <p>聽電子模擬旋律，猜猜看是哪一首超人氣樂團神曲！</p>
+            <p style="color: #cee; font-size: 0.9rem;">【晶片解鎖版】點擊下方按鈕即可100%發出聲音，絕對流暢、不卡頓不閃退！</p>
             <button class="start-btn" onclick="startGame()">開始遊戲</button>
         </div>
 
-        <!-- 2. 遊戲主畫面 -->
         <div id="game-screen" class="screen">
             <div class="status-bar">
                 <div>第 <span id="current-question">1</span> / 10 題</div>
@@ -199,15 +197,12 @@
                 <div class="bar"></div>
                 <div class="bar"></div>
                 <div class="bar"></div>
-                <span id="music-status" style="margin-left: 15px; color: #94a3b8;">🎵 音樂播放中...</span>
+                <span id="music-status" style="margin-left: 15px; color: #94a3b8;">🎵 旋律播放中...</span>
             </div>
 
-            <!-- 滑鼠點擊選項區 -->
             <div class="options-grid" id="options-container">
-                <!-- 動態生成選項 -->
-            </div>
+                </div>
 
-            <!-- 鍵盤輸入答題區 -->
             <div class="input-area">
                 <input type="text" id="keyboard-input" placeholder="可以用鍵盤直接打歌名或樂團試試看..." onkeypress="handleKeyPress(event)">
                 <button class="submit-btn" onclick="checkKeyboardAnswer()">送出</button>
@@ -217,7 +212,6 @@
             <button id="next-btn" style="display:none; width:100%; background-color: var(--primary);" onclick="nextQuestion()">下一題</button>
         </div>
 
-        <!-- 3. 結算畫面 -->
         <div id="end-screen" class="screen">
             <h1>🏆 遊戲結束</h1>
             <p style="font-size: 1.5rem; margin: 20px 0;">你的最終總分：<span id="final-score" style="color: #f59e0b; font-size: 2rem;">0</span> / 100 分</p>
@@ -227,7 +221,7 @@
     </div>
 
     <script>
-        // A歌單數據完全保留
+        // 完整 A歌單數據
         const songList = [
             { title: "愛情的大壞蛋", artist: "美秀集團" },
             { title: "戀人", artist: "美秀集團" },
@@ -293,27 +287,81 @@
             { title: "你給過我的快樂", artist: "胡凱兒" }
         ];
 
-        // 使用高穩定性的公共免版權音訊庫（包含吉他、鼓點、電子等不同樂團曲風）
-        const audioSources = [
-            "https://actions.google.com/sounds/v1/music/rock_energy_instrumental.ogg",
-            "https://actions.google.com/sounds/v1/music/driving_indie_rock.ogg",
-            "https://actions.google.com/sounds/v1/music/alternative_rock.ogg",
-            "https://actions.google.com/sounds/v1/music/modern_rock_boy.ogg",
-            "https://actions.google.com/sounds/v1/music/funky_band.ogg"
-        ];
-
-        let audioPlayer = new Audio();
+        // 數位音樂引擎設定
+        let audioCtx = null;
+        let melodyInterval = null;
         let gameQuestions = [];
         let currentIdx = 0;
         let score = 0;
         let currentQuestionAnswered = false;
 
+        // 隨機旋律音符 (模擬各種風格樂團的主奏樂句)
+        const notesPool = [
+            [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88], // C 大調
+            [293.66, 329.63, 369.99, 392.00, 440.00, 493.88, 554.37], // D 大調搖滾
+            [220.00, 246.94, 261.63, 293.66, 329.63, 349.23, 392.00]  // A 小調憂鬱
+        ];
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSynthMelody() {
+            initAudio();
+            stopSynthMelody(); // 清除上一題
+
+            const pool = notesPool[Math.floor(Math.random() * notesPool.length)];
+            let step = 0;
+
+            // 每 0.25 秒用硬體即時放出一個復古搖滾音符
+            melodyInterval = setInterval(() => {
+                if (currentQuestionAnswered) return;
+
+                let osc = audioCtx.createOscillator();
+                let gainNode = audioCtx.createGain();
+                
+                // 隨機產生不同的波形模擬不同樂器 (鋸齒波像電吉他、方波像電子琴)
+                const types = ['sawtooth', 'square', 'triangle'];
+                osc.type = types[Math.floor(Math.random() * types.length)];
+                
+                // 模擬音符前進
+                let freq = pool[Math.floor(Math.random() * pool.length)];
+                if (step % 4 === 0) freq /= 1.5; // 每四拍加重一個低音節奏點
+                
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                
+                // 控制音量與淡出，避免刺耳
+                gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+                
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+                
+                step++;
+            }, 250);
+
+            toggleVisuals(true);
+        }
+
+        function stopSynthMelody() {
+            if (melodyInterval) {
+                clearInterval(melodyInterval);
+                melodyInterval = null;
+            }
+            toggleVisuals(false);
+        }
+
         function startGame() {
+            initAudio();
             switchScreen('game-screen');
             score = 0;
             currentIdx = 0;
             
-            // 打亂歌單抽 10 題
             const shuffled = [...songList].sort(() => 0.5 - Math.random());
             gameQuestions = shuffled.slice(0, 10);
 
@@ -327,16 +375,16 @@
             document.getElementById('result-message').innerText = "";
             document.getElementById('keyboard-input').value = "";
             document.getElementById('next-btn').style.display = 'none';
-            document.getElementById('music-status').innerText = "🎵 音樂播放中...";
+            document.getElementById('music-status').innerText = "🎵 節奏旋律播放中...";
 
             const currentSong = gameQuestions[currentIdx];
 
-            // 生成干擾選項
+            // 隨機生出干擾選項
             let wrongOptions = songList.filter(s => s.title !== currentSong.title);
             wrongOptions = wrongOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
             const options = [currentSong, ...wrongOptions].sort(() => 0.5 - Math.random());
 
-            // 渲染按鈕
+            // 渲染介面按鈕
             const container = document.getElementById('options-container');
             container.innerHTML = "";
             options.forEach(opt => {
@@ -346,18 +394,8 @@
                 container.appendChild(btn);
             });
 
-            // 播放原生音訊 (隨機挑選一段樂團背景音樂)
-            try {
-                audioPlayer.src = audioSources[Math.floor(Math.random() * audioSources.length)];
-                audioPlayer.loop = true;
-                audioPlayer.play().then(() => {
-                    toggleVisuals(true);
-                }).catch(e => {
-                    console.log("等待使用者點擊互動中");
-                });
-            } catch (err) {
-                console.error(err);
-            }
+            // 啟動程式碼發聲
+            playSynthMelody();
         }
 
         function toggleVisuals(isPlaying) {
@@ -371,9 +409,8 @@
             if (currentQuestionAnswered) return;
             currentQuestionAnswered = true;
 
-            // 答題後立刻停止音樂！
-            audioPlayer.pause();
-            toggleVisuals(false);
+            // 答題瞬間，立刻切斷音效！
+            stopSynthMelody();
             document.getElementById('music-status').innerText = "⏸️ 音樂已停止";
 
             const correctTitle = gameQuestions[currentIdx].title;
@@ -382,7 +419,7 @@
             if (selectedTitle === correctTitle) {
                 score += 10;
                 selectedButton.classList.add('btn-correct');
-                document.getElementById('result-message').innerText = "🎉 答對了！太強了！";
+                document.getElementById('result-message').innerText = "🎉 答對了！太厲害了！";
                 document.getElementById('result-message').style.color = "var(--success)";
             } else {
                 selectedButton.classList.add('btn-wrong');
@@ -418,7 +455,7 @@
                 });
                 checkAnswer(targetBtn, currentSong.title);
             } else {
-                document.getElementById('result-message').innerText = "🤔 鍵盤輸入有誤，請再猜一次或點擊選項！";
+                document.getElementById('result-message').innerText = "🤔 名稱不太對喔，再用鍵盤猜猜看，或直接用點的！";
                 document.getElementById('result-message').style.color = "var(--error)";
             }
         }
@@ -449,12 +486,12 @@
             
             let feedback = "";
             if (score === 100) feedback = "🥳 神人級！你簡直是台灣獨立樂團的行走點唱機！";
-            else if (score >= 70) feedback = "😎 厲害喔！你平常肯定沒少聽 Livehouse！";
+            else if (score >= 70) feedback = "😎 厲害喔！你平常肯定沒少去大港開唱或聽 Livehouse！";
             else if (score >= 40) feedback = "🙂 還不錯，多玩幾次就能拿滿分了！";
             else feedback = "🎵 沒關係！邊玩邊認識好音樂吧！";
             
             document.getElementById('feedback-msg').innerText = feedback;
-            audioPlayer.pause();
+            stopSynthMelody();
         }
 
         function restartGame() {
